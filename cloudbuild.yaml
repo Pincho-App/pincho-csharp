@@ -1,0 +1,117 @@
+# Cloud Build configuration for WirePusher C# SDK
+# Runs tests, code coverage checks, and builds the package
+
+steps:
+  # Step 1: Restore dependencies
+  - name: 'mcr.microsoft.com/dotnet/sdk:6.0'
+    id: 'restore'
+    entrypoint: 'dotnet'
+    args:
+      - 'restore'
+
+  # Step 2: Build solution
+  - name: 'mcr.microsoft.com/dotnet/sdk:6.0'
+    id: 'build'
+    entrypoint: 'dotnet'
+    waitFor: ['restore']
+    args:
+      - 'build'
+      - '--configuration'
+      - 'Release'
+      - '--no-restore'
+
+  # Step 3: Run tests with coverage
+  - name: 'mcr.microsoft.com/dotnet/sdk:6.0'
+    id: 'test'
+    entrypoint: 'dotnet'
+    waitFor: ['build']
+    args:
+      - 'test'
+      - '--configuration'
+      - 'Release'
+      - '--no-build'
+      - '--collect:XPlat Code Coverage'
+      - '--results-directory'
+      - './TestResults'
+
+  # Step 4: Check coverage threshold (90%)
+  - name: 'mcr.microsoft.com/dotnet/sdk:6.0'
+    id: 'coverage-check'
+    entrypoint: 'bash'
+    waitFor: ['test']
+    args:
+      - '-c'
+      - |
+        dotnet tool install --global dotnet-reportgenerator-globaltool || true
+        export PATH="$PATH:/root/.dotnet/tools"
+
+        reportgenerator \
+          -reports:"./TestResults/**/coverage.cobertura.xml" \
+          -targetdir:"./coveragereport" \
+          -reporttypes:"Html;TextSummary"
+
+        # Extract line coverage percentage
+        COVERAGE=$(grep -oP 'Line coverage: \K[0-9.]+' ./coveragereport/Summary.txt || echo "0")
+        echo "Line coverage: $COVERAGE%"
+
+        # Check if coverage meets threshold
+        if (( $(echo "$COVERAGE < 90.0" | bc -l) )); then
+          echo "ERROR: Coverage $COVERAGE% is below 90% threshold"
+          exit 1
+        fi
+
+        echo "Coverage threshold met (>= 90%)"
+
+  # Step 5: Pack NuGet package
+  - name: 'mcr.microsoft.com/dotnet/sdk:6.0'
+    id: 'pack'
+    entrypoint: 'dotnet'
+    waitFor: ['coverage-check']
+    args:
+      - 'pack'
+      - 'src/WirePusher/WirePusher.csproj'
+      - '--configuration'
+      - 'Release'
+      - '--no-build'
+      - '--output'
+      - './artifacts'
+
+  # Step 6: Publish to NuGet (ONLY on Git tags)
+  # NuGet publishing requires API key
+  # This step validates the package is ready for publication
+  - name: 'mcr.microsoft.com/dotnet/sdk:6.0'
+    id: 'publish'
+    entrypoint: 'bash'
+    waitFor: ['pack']
+    args:
+      - '-c'
+      - |
+        if [ -n "$TAG_NAME" ]; then
+          echo "Publishing version $TAG_NAME to NuGet..."
+          echo ""
+          echo "NuGet publication requires:"
+          echo "1. Create account at https://www.nuget.org/"
+          echo "2. Generate API key"
+          echo "3. Add API key to Secret Manager (nuget-api-key)"
+          echo "4. Run: dotnet nuget push artifacts/*.nupkg --api-key \$NUGET_API_KEY --source https://api.nuget.org/v3/index.json"
+          echo ""
+          echo "Tag $TAG_NAME is valid and package is ready!"
+          ls -lh ./artifacts/*.nupkg
+        else
+          echo "Skipping NuGet publish (not a tagged release)"
+          echo "To publish: git tag v1.0.0 && git push origin v1.0.0"
+        fi
+
+timeout: '600s'
+options:
+  machineType: 'N1_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+
+# Artifacts to save
+artifacts:
+  objects:
+    location: 'gs://wirepusher-build-artifacts/csharp-sdk/$BUILD_ID'
+    paths:
+      - 'artifacts/*.nupkg'
+      - 'coveragereport/*'
+      - 'TestResults/**/coverage.cobertura.xml'

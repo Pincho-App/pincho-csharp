@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- Package metadata -->
+    <PackageId>WirePusher</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>WirePusher</Authors>
+    <Company>WirePusher</Company>
+    <Description>Official WirePusher SDK for .NET - Send push notifications to your mobile devices</Description>
+    <PackageTags>wirepusher;push-notifications;notifications;alerts;dotnet</PackageTags>
+    <PackageProjectUrl>https://gitlab.com/wirepusher/csharp-sdk</PackageProjectUrl>
+    <RepositoryUrl>https://gitlab.com/wirepusher/csharp-sdk.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
