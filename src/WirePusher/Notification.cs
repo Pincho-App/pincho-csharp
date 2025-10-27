@@ -46,4 +46,15 @@ public record Notification
     [JsonPropertyName("action_url")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ActionUrl { get; init; }
+
+    /// <summary>
+    /// Gets or initializes the encryption password for AES-128-CBC encryption (optional).
+    /// </summary>
+    /// <remarks>
+    /// When provided, the message will be encrypted client-side before sending.
+    /// Password must match the type configuration in the WirePusher app.
+    /// Password is never sent to the API - used only for local encryption.
+    /// </remarks>
+    [JsonIgnore]
+    public string? EncryptionPassword { get; init; }
 }

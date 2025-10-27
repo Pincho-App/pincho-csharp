@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using WirePusher.Crypto;
 using WirePusher.Exceptions;
 
 namespace WirePusher;
@@ -34,17 +35,17 @@ public class WirePusherClient : IWirePusherClient
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
 
     private readonly HttpClient _httpClient;
-    private readonly string _token;
-    private readonly string _userId;
+    private readonly string? _token;
+    private readonly string? _userId;
     private readonly JsonSerializerOptions _jsonOptions;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WirePusherClient"/> class.
     /// </summary>
-    /// <param name="token">The WirePusher API token (required).</param>
-    /// <param name="userId">The WirePusher user ID (required).</param>
-    /// <exception cref="ArgumentException">Thrown when token or userId is null or empty.</exception>
-    public WirePusherClient(string token, string userId)
+    /// <param name="token">The WirePusher API token (pass null if using userId).</param>
+    /// <param name="userId">The WirePusher user ID (pass null if using token).</param>
+    /// <exception cref="ArgumentException">Thrown when both or neither credentials are provided.</exception>
+    public WirePusherClient(string? token, string? userId)
         : this(token, userId, CreateDefaultHttpClient())
     {
     }
@@ -52,11 +53,11 @@ public class WirePusherClient : IWirePusherClient
     /// <summary>
     /// Initializes a new instance of the <see cref="WirePusherClient"/> class.
     /// </summary>
-    /// <param name="token">The WirePusher API token (required).</param>
-    /// <param name="userId">The WirePusher user ID (required).</param>
+    /// <param name="token">The WirePusher API token (pass null if using userId).</param>
+    /// <param name="userId">The WirePusher user ID (pass null if using token).</param>
     /// <param name="timeout">The request timeout.</param>
-    /// <exception cref="ArgumentException">Thrown when token or userId is null or empty.</exception>
-    public WirePusherClient(string token, string userId, TimeSpan timeout)
+    /// <exception cref="ArgumentException">Thrown when both or neither credentials are provided.</exception>
+    public WirePusherClient(string? token, string? userId, TimeSpan timeout)
         : this(token, userId, CreateDefaultHttpClient(timeout))
     {
     }
@@ -64,18 +65,21 @@ public class WirePusherClient : IWirePusherClient
     /// <summary>
     /// Initializes a new instance of the <see cref="WirePusherClient"/> class.
     /// </summary>
-    /// <param name="token">The WirePusher API token (required).</param>
-    /// <param name="userId">The WirePusher user ID (required).</param>
+    /// <param name="token">The WirePusher API token (pass null if using userId).</param>
+    /// <param name="userId">The WirePusher user ID (pass null if using token).</param>
     /// <param name="httpClient">A custom HTTP client (for testing or advanced scenarios).</param>
-    /// <exception cref="ArgumentException">Thrown when token or userId is null or empty.</exception>
+    /// <exception cref="ArgumentException">Thrown when both or neither credentials are provided.</exception>
     /// <exception cref="ArgumentNullException">Thrown when httpClient is null.</exception>
-    public WirePusherClient(string token, string userId, HttpClient httpClient)
+    public WirePusherClient(string? token, string? userId, HttpClient httpClient)
     {
-        if (string.IsNullOrWhiteSpace(token))
-            throw new ArgumentException("Token is required", nameof(token));
+        var hasToken = !string.IsNullOrWhiteSpace(token);
+        var hasUserId = !string.IsNullOrWhiteSpace(userId);
 
-        if (string.IsNullOrWhiteSpace(userId))
-            throw new ArgumentException("User ID is required", nameof(userId));
+        if (!hasToken && !hasUserId)
+            throw new ArgumentException("Either token or userId is required");
+
+        if (hasToken && hasUserId)
+            throw new ArgumentException("Token and userId are mutually exclusive - use one or the other, not both");
 
         _token = token;
         _userId = userId;
@@ -112,14 +116,34 @@ public class WirePusherClient : IWirePusherClient
 
         try
         {
+            // Handle encryption if password provided
+            var finalMessage = notification.Message;
+            string? ivHex = null;
+
+            if (!string.IsNullOrWhiteSpace(notification.EncryptionPassword))
+            {
+                var ivResult = EncryptionUtil.GenerateIV();
+                finalMessage = EncryptionUtil.EncryptMessage(
+                    notification.Message,
+                    notification.EncryptionPassword,
+                    ivResult.IVBytes
+                );
+                ivHex = ivResult.IVHex;
+            }
+
             // Build request payload
             var payload = new Dictionary<string, object?>
             {
-                ["id"] = _userId,
-                ["token"] = _token,
                 ["title"] = notification.Title,
-                ["message"] = notification.Message
+                ["message"] = finalMessage
             };
+
+            // Add authentication (token XOR userId)
+            if (_token != null)
+                payload["token"] = _token;
+
+            if (_userId != null)
+                payload["id"] = _userId;
 
             if (notification.Type != null)
                 payload["type"] = notification.Type;
@@ -132,6 +156,9 @@ public class WirePusherClient : IWirePusherClient
 
             if (notification.ActionUrl != null)
                 payload["action_url"] = notification.ActionUrl;
+
+            if (ivHex != null)
+                payload["iv"] = ivHex;
 
             // Send HTTP request
             var response = await _httpClient.PostAsJsonAsync(
