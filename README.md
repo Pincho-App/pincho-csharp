@@ -40,7 +40,7 @@ dotnet add package WirePusher
 using WirePusher;
 
 var client = new WirePusherClient(
-    Environment.GetEnvironmentVariable("WIREPUSHER_TOKEN")!);
+    Environment.GetEnvironmentVariable("WIREPUSHER_TOKEN")!, null);
 
 await client.SendAsync(
     "Deploy Complete",
@@ -56,7 +56,7 @@ await client.SendAsync(
 ```csharp
 using WirePusher;
 
-var client = new WirePusherClient("wpt_abc123xyz");
+var client = new WirePusherClient("wpt_abc123xyz", null);
 
 var response = await client.SendAsync(
     "Deploy Complete",
@@ -70,7 +70,7 @@ Console.WriteLine(response.Status);  // "success"
 ```csharp
 using WirePusher;
 
-var client = new WirePusherClient("wpt_abc123xyz");
+var client = new WirePusherClient("wpt_abc123xyz", null);
 
 var notification = new Notification
 {
@@ -107,7 +107,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<IWirePusherClient>(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
-    return new WirePusherClient(config["WirePusher:Token"]!);
+    return new WirePusherClient(config["WirePusher:Token"]!, null);
 });
 
 var app = builder.Build();
@@ -155,7 +155,7 @@ Encrypt notification messages using AES-128-CBC. Only the `Message` field is enc
 using WirePusher;
 
 var client = new WirePusherClient(
-    Environment.GetEnvironmentVariable("WIREPUSHER_TOKEN")!);
+    Environment.GetEnvironmentVariable("WIREPUSHER_TOKEN")!, null);
 
 var notification = new Notification
 {
@@ -247,7 +247,7 @@ using WirePusher;
 using WirePusher.Exceptions;
 
 var client = new WirePusherClient(
-    Environment.GetEnvironmentVariable("WIREPUSHER_TOKEN")!);
+    Environment.GetEnvironmentVariable("WIREPUSHER_TOKEN")!, null);
 
 try
 {
@@ -281,7 +281,7 @@ public class DeploymentNotifier
     public DeploymentNotifier()
     {
         var token = Environment.GetEnvironmentVariable("WIREPUSHER_TOKEN")!;
-        _client = new WirePusherClient(token);
+        _client = new WirePusherClient(token, null);
     }
 
     public async Task NotifyDeploymentAsync(string version, string environment)
@@ -344,7 +344,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<IWirePusherClient>(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
-    return new WirePusherClient(config["WirePusher:Token"]!);
+    return new WirePusherClient(config["WirePusher:Token"]!, null);
 });
 
 var app = builder.Build();
