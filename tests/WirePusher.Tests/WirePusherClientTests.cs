@@ -14,35 +14,41 @@ public class WirePusherClientTests
     private const string TestUserId = "test_user_123";
 
     [Fact]
-    public void Constructor_WithValidParameters_CreatesClient()
+    public void Constructor_WithValidToken_CreatesClient()
     {
-        var client = new WirePusherClient(TestToken, TestUserId);
+        var client = new WirePusherClient(TestToken, null);
+        Assert.NotNull(client);
+    }
+
+    [Fact]
+    public void Constructor_WithValidUserId_CreatesClient()
+    {
+        var client = new WirePusherClient(null, TestUserId);
         Assert.NotNull(client);
     }
 
     [Fact]
     public void Constructor_WithTimeout_CreatesClient()
     {
-        var client = new WirePusherClient(TestToken, TestUserId, TimeSpan.FromSeconds(60));
+        var client = new WirePusherClient(TestToken, null, TimeSpan.FromSeconds(60));
         Assert.NotNull(client);
     }
 
-    [Theory]
-    [InlineData(null, TestUserId)]
-    [InlineData("", TestUserId)]
-    [InlineData("   ", TestUserId)]
-    public void Constructor_WithInvalidToken_ThrowsArgumentException(string? token, string userId)
+    [Fact]
+    public void Constructor_WithBothTokenAndUserId_ThrowsArgumentException()
     {
-        Assert.Throws<ArgumentException>(() => new WirePusherClient(token!, userId));
+        Assert.Throws<ArgumentException>(() => new WirePusherClient(TestToken, TestUserId));
     }
 
     [Theory]
-    [InlineData(TestToken, null)]
-    [InlineData(TestToken, "")]
-    [InlineData(TestToken, "   ")]
-    public void Constructor_WithInvalidUserId_ThrowsArgumentException(string token, string? userId)
+    [InlineData(null, null)]
+    [InlineData("", "")]
+    [InlineData("   ", "   ")]
+    [InlineData(null, "")]
+    [InlineData("", null)]
+    public void Constructor_WithNeitherTokenNorUserId_ThrowsArgumentException(string? token, string? userId)
     {
-        Assert.Throws<ArgumentException>(() => new WirePusherClient(token, userId!));
+        Assert.Throws<ArgumentException>(() => new WirePusherClient(token!, userId!));
     }
 
     [Fact]
@@ -51,7 +57,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient(HttpStatusCode.OK,
             new NotificationResponse("success", "Notification sent successfully"));
 
-        var client = new WirePusherClient(TestToken, TestUserId, httpClient);
+        var client = new WirePusherClient(TestToken, null, httpClient);
 
         var response = await client.SendAsync("Test Title", "Test Message");
 
@@ -67,7 +73,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient(HttpStatusCode.OK,
             new NotificationResponse("success", "Notification sent successfully"));
 
-        var client = new WirePusherClient(TestToken, TestUserId, httpClient);
+        var client = new WirePusherClient(TestToken, null, httpClient);
 
         var notification = new Notification
         {
@@ -88,7 +94,7 @@ public class WirePusherClientTests
     [Fact]
     public async Task SendNotificationAsync_WithNullNotification_ThrowsArgumentNullException()
     {
-        var client = new WirePusherClient(TestToken, TestUserId);
+        var client = new WirePusherClient(TestToken, null);
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
             client.SendNotificationAsync(null!));
@@ -100,7 +106,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient(HttpStatusCode.Unauthorized,
             new { status = "error", message = "Invalid token" });
 
-        var client = new WirePusherClient(TestToken, TestUserId, httpClient);
+        var client = new WirePusherClient(TestToken, null, httpClient);
 
         var exception = await Assert.ThrowsAsync<AuthenticationException>(() =>
             client.SendAsync("Test", "Message"));
@@ -115,7 +121,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient(HttpStatusCode.BadRequest,
             new { status = "error", message = "Title is required" });
 
-        var client = new WirePusherClient(TestToken, TestUserId, httpClient);
+        var client = new WirePusherClient(TestToken, null, httpClient);
 
         var exception = await Assert.ThrowsAsync<ValidationException>(() =>
             client.SendAsync("", "Message"));
@@ -130,7 +136,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient((HttpStatusCode)429,
             new { status = "error", message = "Rate limit exceeded" });
 
-        var client = new WirePusherClient(TestToken, TestUserId, httpClient);
+        var client = new WirePusherClient(TestToken, null, httpClient);
 
         var exception = await Assert.ThrowsAsync<RateLimitException>(() =>
             client.SendAsync("Test", "Message"));
@@ -145,7 +151,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient(HttpStatusCode.InternalServerError,
             new { status = "error", message = "Server error" });
 
-        var client = new WirePusherClient(TestToken, TestUserId, httpClient);
+        var client = new WirePusherClient(TestToken, null, httpClient);
 
         var exception = await Assert.ThrowsAsync<WirePusherException>(() =>
             client.SendAsync("Test", "Message"));
@@ -174,10 +180,192 @@ public class WirePusherClientTests
             BaseAddress = new Uri("https://api.test.com")
         };
 
-        var client = new WirePusherClient(TestToken, TestUserId, httpClient);
+        var client = new WirePusherClient(TestToken, null, httpClient);
 
         await Assert.ThrowsAsync<WirePusherException>(() =>
             client.SendAsync("Test", "Message"));
+    }
+
+    [Fact]
+    public async Task SendNotificationAsync_WithEncryption_EncryptsMessage()
+    {
+        string? capturedPayload = null;
+
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage request, CancellationToken _) =>
+            {
+                capturedPayload = request.Content?.ReadAsStringAsync().Result;
+                return new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent(
+                        JsonSerializer.Serialize(new NotificationResponse("success", "Sent")),
+                        Encoding.UTF8,
+                        "application/json")
+                };
+            });
+
+        var httpClient = new HttpClient(mockHandler.Object)
+        {
+            BaseAddress = new Uri("https://api.test.com")
+        };
+
+        var client = new WirePusherClient(TestToken, null, httpClient);
+
+        var notification = new Notification
+        {
+            Title = "Test Title",
+            Message = "Secret Message",
+            EncryptionPassword = "my-password"
+        };
+
+        var response = await client.SendNotificationAsync(notification);
+
+        Assert.True(response.IsSuccess);
+        Assert.NotNull(capturedPayload);
+
+        // Parse the payload
+        var payload = JsonSerializer.Deserialize<JsonElement>(capturedPayload);
+
+        // Verify message is encrypted (not plaintext)
+        var encryptedMessage = payload.GetProperty("message").GetString();
+        Assert.NotNull(encryptedMessage);
+        Assert.NotEqual("Secret Message", encryptedMessage);
+
+        // Verify IV is present
+        Assert.True(payload.TryGetProperty("iv", out var ivElement));
+        var iv = ivElement.GetString();
+        Assert.NotNull(iv);
+        Assert.Equal(32, iv.Length); // 16 bytes as hex = 32 characters
+
+        // Verify encrypted message uses custom Base64
+        Assert.DoesNotContain('+', encryptedMessage);
+        Assert.DoesNotContain('/', encryptedMessage);
+        Assert.DoesNotContain('=', encryptedMessage);
+    }
+
+    [Fact]
+    public async Task SendNotificationAsync_WithoutEncryption_SendsPlaintext()
+    {
+        string? capturedPayload = null;
+
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage request, CancellationToken _) =>
+            {
+                capturedPayload = request.Content?.ReadAsStringAsync().Result;
+                return new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent(
+                        JsonSerializer.Serialize(new NotificationResponse("success", "Sent")),
+                        Encoding.UTF8,
+                        "application/json")
+                };
+            });
+
+        var httpClient = new HttpClient(mockHandler.Object)
+        {
+            BaseAddress = new Uri("https://api.test.com")
+        };
+
+        var client = new WirePusherClient(TestToken, null, httpClient);
+
+        var notification = new Notification
+        {
+            Title = "Test Title",
+            Message = "Plain Message"
+            // No EncryptionPassword
+        };
+
+        var response = await client.SendNotificationAsync(notification);
+
+        Assert.True(response.IsSuccess);
+        Assert.NotNull(capturedPayload);
+
+        // Parse the payload
+        var payload = JsonSerializer.Deserialize<JsonElement>(capturedPayload);
+
+        // Verify message is plaintext
+        var message = payload.GetProperty("message").GetString();
+        Assert.Equal("Plain Message", message);
+
+        // Verify no IV is present
+        Assert.False(payload.TryGetProperty("iv", out _));
+    }
+
+    [Fact]
+    public async Task SendNotificationAsync_WithEncryption_OnlyEncryptsMessage()
+    {
+        string? capturedPayload = null;
+
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage request, CancellationToken _) =>
+            {
+                capturedPayload = request.Content?.ReadAsStringAsync().Result;
+                return new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent(
+                        JsonSerializer.Serialize(new NotificationResponse("success", "Sent")),
+                        Encoding.UTF8,
+                        "application/json")
+                };
+            });
+
+        var httpClient = new HttpClient(mockHandler.Object)
+        {
+            BaseAddress = new Uri("https://api.test.com")
+        };
+
+        var client = new WirePusherClient(TestToken, null, httpClient);
+
+        var notification = new Notification
+        {
+            Title = "Public Title",
+            Message = "Secret Message",
+            Type = "info",
+            Tags = new[] { "tag1", "tag2" },
+            ImageUrl = "https://example.com/image.png",
+            ActionUrl = "https://example.com",
+            EncryptionPassword = "my-password"
+        };
+
+        var response = await client.SendNotificationAsync(notification);
+
+        Assert.True(response.IsSuccess);
+        Assert.NotNull(capturedPayload);
+
+        var payload = JsonSerializer.Deserialize<JsonElement>(capturedPayload);
+
+        // Verify title is NOT encrypted
+        Assert.Equal("Public Title", payload.GetProperty("title").GetString());
+
+        // Verify message IS encrypted
+        var encryptedMessage = payload.GetProperty("message").GetString();
+        Assert.NotEqual("Secret Message", encryptedMessage);
+
+        // Verify other fields are NOT encrypted
+        Assert.Equal("info", payload.GetProperty("type").GetString());
+        Assert.Equal("https://example.com/image.png", payload.GetProperty("image_url").GetString());
+        Assert.Equal("https://example.com", payload.GetProperty("action_url").GetString());
+
+        var tags = payload.GetProperty("tags");
+        Assert.Equal(2, tags.GetArrayLength());
     }
 
     private static HttpClient CreateMockHttpClient(HttpStatusCode statusCode, object responseContent)

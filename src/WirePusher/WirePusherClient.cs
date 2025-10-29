@@ -43,9 +43,11 @@ public class WirePusherClient : IWirePusherClient
     /// Initializes a new instance of the <see cref="WirePusherClient"/> class.
     /// </summary>
     /// <param name="token">The WirePusher API token (pass null if using userId).</param>
-    /// <param name="userId">The WirePusher user ID (pass null if using token).</param>
+    /// <param name="userId">The WirePusher user ID (pass null if using token). DEPRECATED: Legacy authentication. Use Token parameter instead.</param>
     /// <exception cref="ArgumentException">Thrown when both or neither credentials are provided.</exception>
-    public WirePusherClient(string? token, string? userId)
+    public WirePusherClient(
+        string? token,
+        string? userId)
         : this(token, userId, CreateDefaultHttpClient())
     {
     }
@@ -54,10 +56,13 @@ public class WirePusherClient : IWirePusherClient
     /// Initializes a new instance of the <see cref="WirePusherClient"/> class.
     /// </summary>
     /// <param name="token">The WirePusher API token (pass null if using userId).</param>
-    /// <param name="userId">The WirePusher user ID (pass null if using token).</param>
+    /// <param name="userId">The WirePusher user ID (pass null if using token). DEPRECATED: Legacy authentication. Use Token parameter instead.</param>
     /// <param name="timeout">The request timeout.</param>
     /// <exception cref="ArgumentException">Thrown when both or neither credentials are provided.</exception>
-    public WirePusherClient(string? token, string? userId, TimeSpan timeout)
+    public WirePusherClient(
+        string? token,
+        string? userId,
+        TimeSpan timeout)
         : this(token, userId, CreateDefaultHttpClient(timeout))
     {
     }
@@ -66,11 +71,14 @@ public class WirePusherClient : IWirePusherClient
     /// Initializes a new instance of the <see cref="WirePusherClient"/> class.
     /// </summary>
     /// <param name="token">The WirePusher API token (pass null if using userId).</param>
-    /// <param name="userId">The WirePusher user ID (pass null if using token).</param>
+    /// <param name="userId">The WirePusher user ID (pass null if using token). DEPRECATED: Legacy authentication. Use Token parameter instead.</param>
     /// <param name="httpClient">A custom HTTP client (for testing or advanced scenarios).</param>
     /// <exception cref="ArgumentException">Thrown when both or neither credentials are provided.</exception>
     /// <exception cref="ArgumentNullException">Thrown when httpClient is null.</exception>
-    public WirePusherClient(string? token, string? userId, HttpClient httpClient)
+    public WirePusherClient(
+        string? token,
+        string? userId,
+        HttpClient httpClient)
     {
         var hasToken = !string.IsNullOrWhiteSpace(token);
         var hasUserId = !string.IsNullOrWhiteSpace(userId);

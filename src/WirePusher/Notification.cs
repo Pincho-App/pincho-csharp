@@ -11,13 +11,13 @@ public record Notification
     /// Gets or initializes the notification title (required, max 256 characters).
     /// </summary>
     [JsonPropertyName("title")]
-    public required string Title { get; init; }
+    public string Title { get; init; } = string.Empty;
 
     /// <summary>
     /// Gets or initializes the notification message (required, max 4096 characters).
     /// </summary>
     [JsonPropertyName("message")]
-    public required string Message { get; init; }
+    public string Message { get; init; } = string.Empty;
 
     /// <summary>
     /// Gets or initializes the notification type for categorization (optional).
