@@ -11,7 +11,7 @@ namespace WirePusher.Tests;
 public class WirePusherClientTests
 {
     private const string TestToken = "wpt_test_token";
-    private const string TestUserId = "test_user_123";
+    private const string TestDeviceId = "test_user_123";
 
     [Fact]
     public void Constructor_WithValidToken_CreatesClient()
@@ -21,9 +21,9 @@ public class WirePusherClientTests
     }
 
     [Fact]
-    public void Constructor_WithValidUserId_CreatesClient()
+    public void Constructor_WithValidDeviceId_CreatesClient()
     {
-        var client = new WirePusherClient(null, TestUserId);
+        var client = new WirePusherClient(null, TestDeviceId);
         Assert.NotNull(client);
     }
 
@@ -35,9 +35,9 @@ public class WirePusherClientTests
     }
 
     [Fact]
-    public void Constructor_WithBothTokenAndUserId_ThrowsArgumentException()
+    public void Constructor_WithBothTokenAndDeviceId_ThrowsArgumentException()
     {
-        Assert.Throws<ArgumentException>(() => new WirePusherClient(TestToken, TestUserId));
+        Assert.Throws<ArgumentException>(() => new WirePusherClient(TestToken, TestDeviceId));
     }
 
     [Theory]
@@ -46,9 +46,9 @@ public class WirePusherClientTests
     [InlineData("   ", "   ")]
     [InlineData(null, "")]
     [InlineData("", null)]
-    public void Constructor_WithNeitherTokenNorUserId_ThrowsArgumentException(string? token, string? userId)
+    public void Constructor_WithNeitherTokenNorDeviceId_ThrowsArgumentException(string? token, string? deviceId)
     {
-        Assert.Throws<ArgumentException>(() => new WirePusherClient(token!, userId!));
+        Assert.Throws<ArgumentException>(() => new WirePusherClient(token!, deviceId!));
     }
 
     [Fact]

@@ -15,7 +15,7 @@ namespace WirePusher;
 /// <example>
 /// <code>
 /// // Simple send
-/// var client = new WirePusherClient("wpt_your_token", "your_user_id");
+/// var client = new WirePusherClient("wpt_your_token", null);
 /// await client.SendAsync("Build Failed", "Pipeline #123 failed");
 ///
 /// // Advanced send
@@ -36,61 +36,61 @@ public class WirePusherClient : IWirePusherClient
 
     private readonly HttpClient _httpClient;
     private readonly string? _token;
-    private readonly string? _userId;
+    private readonly string? _deviceId;
     private readonly JsonSerializerOptions _jsonOptions;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WirePusherClient"/> class.
     /// </summary>
-    /// <param name="token">The WirePusher API token (pass null if using userId).</param>
-    /// <param name="userId">The WirePusher user ID (pass null if using token). DEPRECATED: Legacy authentication. Use Token parameter instead.</param>
+    /// <param name="token">The WirePusher API token (pass null if using deviceId).</param>
+    /// <param name="deviceId">The WirePusher device ID (pass null if using token). DEPRECATED: Legacy authentication. Use Token parameter instead.</param>
     /// <exception cref="ArgumentException">Thrown when both or neither credentials are provided.</exception>
     public WirePusherClient(
         string? token,
-        string? userId)
-        : this(token, userId, CreateDefaultHttpClient())
+        string? deviceId)
+        : this(token, deviceId, CreateDefaultHttpClient())
     {
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WirePusherClient"/> class.
     /// </summary>
-    /// <param name="token">The WirePusher API token (pass null if using userId).</param>
-    /// <param name="userId">The WirePusher user ID (pass null if using token). DEPRECATED: Legacy authentication. Use Token parameter instead.</param>
+    /// <param name="token">The WirePusher API token (pass null if using deviceId).</param>
+    /// <param name="deviceId">The WirePusher device ID (pass null if using token). DEPRECATED: Legacy authentication. Use Token parameter instead.</param>
     /// <param name="timeout">The request timeout.</param>
     /// <exception cref="ArgumentException">Thrown when both or neither credentials are provided.</exception>
     public WirePusherClient(
         string? token,
-        string? userId,
+        string? deviceId,
         TimeSpan timeout)
-        : this(token, userId, CreateDefaultHttpClient(timeout))
+        : this(token, deviceId, CreateDefaultHttpClient(timeout))
     {
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WirePusherClient"/> class.
     /// </summary>
-    /// <param name="token">The WirePusher API token (pass null if using userId).</param>
-    /// <param name="userId">The WirePusher user ID (pass null if using token). DEPRECATED: Legacy authentication. Use Token parameter instead.</param>
+    /// <param name="token">The WirePusher API token (pass null if using deviceId).</param>
+    /// <param name="deviceId">The WirePusher device ID (pass null if using token). DEPRECATED: Legacy authentication. Use Token parameter instead.</param>
     /// <param name="httpClient">A custom HTTP client (for testing or advanced scenarios).</param>
     /// <exception cref="ArgumentException">Thrown when both or neither credentials are provided.</exception>
     /// <exception cref="ArgumentNullException">Thrown when httpClient is null.</exception>
     public WirePusherClient(
         string? token,
-        string? userId,
+        string? deviceId,
         HttpClient httpClient)
     {
         var hasToken = !string.IsNullOrWhiteSpace(token);
-        var hasUserId = !string.IsNullOrWhiteSpace(userId);
+        var hasDeviceId = !string.IsNullOrWhiteSpace(deviceId);
 
-        if (!hasToken && !hasUserId)
-            throw new ArgumentException("Either token or userId is required");
+        if (!hasToken && !hasDeviceId)
+            throw new ArgumentException("Either token or deviceId is required");
 
-        if (hasToken && hasUserId)
-            throw new ArgumentException("Token and userId are mutually exclusive - use one or the other, not both");
+        if (hasToken && hasDeviceId)
+            throw new ArgumentException("Token and deviceId are mutually exclusive - use one or the other, not both");
 
         _token = token;
-        _userId = userId;
+        _deviceId = deviceId;
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 
         _jsonOptions = new JsonSerializerOptions
@@ -146,12 +146,12 @@ public class WirePusherClient : IWirePusherClient
                 ["message"] = finalMessage
             };
 
-            // Add authentication (token XOR userId)
+            // Add authentication (token XOR deviceId)
             if (_token != null)
                 payload["token"] = _token;
 
-            if (_userId != null)
-                payload["id"] = _userId;
+            if (_deviceId != null)
+                payload["id"] = _deviceId;
 
             if (notification.Type != null)
                 payload["type"] = notification.Type;
