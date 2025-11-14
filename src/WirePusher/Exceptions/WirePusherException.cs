@@ -1,7 +1,7 @@
 namespace WirePusher.Exceptions;
 
 /// <summary>
-/// Base exception for all WirePusher SDK errors.
+/// Base exception for all WirePusher Client Library errors.
 /// </summary>
 public class WirePusherException : Exception
 {
