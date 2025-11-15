@@ -1,9 +1,9 @@
-# WirePusher C# SDK
+# WirePusher C# Client Library
 
 [![NuGet](https://img.shields.io/nuget/v/WirePusher.svg)](https://www.nuget.org/packages/WirePusher/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-Official C# SDK for [WirePusher](https://wirepusher.dev) push notifications.
+Official C# Client Library for [WirePusher](https://wirepusher.dev) push notifications.
 
 ## Features
 
@@ -423,8 +423,8 @@ public class NotificationBackgroundService : BackgroundService
 
 ```bash
 # Clone repository
-git clone https://gitlab.com/wirepusher/csharp-sdk.git
-cd csharp-sdk
+git clone https://gitlab.com/wirepusher/wirepusher-csharp.git
+cd wirepusher-csharp
 
 # Restore dependencies
 dotnet restore
@@ -453,7 +453,7 @@ reportgenerator -reports:"**/coverage.cobertura.xml" -targetdir:"coveragereport"
 ### Project Structure
 
 ```
-csharp-sdk/
+wirepusher-csharp/
 ├── src/WirePusher/
 │   ├── WirePusher.csproj
 │   ├── WirePusherClient.cs
@@ -476,8 +476,8 @@ csharp-sdk/
 ## Links
 
 - **Documentation**: https://wirepusher.dev/help
-- **Repository**: https://gitlab.com/wirepusher/csharp-sdk
-- **Issues**: https://gitlab.com/wirepusher/csharp-sdk/-/issues
+- **Repository**: https://gitlab.com/wirepusher/wirepusher-csharp
+- **Issues**: https://gitlab.com/wirepusher/wirepusher-csharp/-/issues
 - **NuGet**: https://www.nuget.org/packages/WirePusher/
 
 ## License

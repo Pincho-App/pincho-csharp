@@ -12,10 +12,10 @@
     <Version>1.0.0</Version>
     <Authors>WirePusher</Authors>
     <Company>WirePusher</Company>
-    <Description>Official WirePusher SDK for .NET - Send push notifications to your mobile devices</Description>
+    <Description>Official WirePusher Client Library for .NET - Send push notifications to your mobile devices</Description>
     <PackageTags>wirepusher;push-notifications;notifications;alerts;dotnet</PackageTags>
-    <PackageProjectUrl>https://gitlab.com/wirepusher/csharp-sdk</PackageProjectUrl>
-    <RepositoryUrl>https://gitlab.com/wirepusher/csharp-sdk.git</RepositoryUrl>
+    <PackageProjectUrl>https://gitlab.com/wirepusher/wirepusher-csharp</PackageProjectUrl>
+    <RepositoryUrl>https://gitlab.com/wirepusher/wirepusher-csharp.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>

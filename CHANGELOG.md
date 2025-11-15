@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2025-10-26
 
 ### Added
-- Initial release of WirePusher C# SDK
+- Initial release of WirePusher C# Client Library
 - `WirePusherClient` class with async `SendAsync()` methods
 - `IWirePusherClient` interface for dependency injection
 - .NET 6+ with built-in `HttpClient` and `System.Text.Json` (zero external dependencies)
@@ -43,5 +43,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - .NET 6+ built-in HttpClient (no external HTTP library required)
 - System.Text.Json (built-in, no Newtonsoft.Json required)
 
-[Unreleased]: https://gitlab.com/wirepusher/csharp-sdk/-/compare/v1.0.0...main
-[1.0.0]: https://gitlab.com/wirepusher/csharp-sdk/-/tags/v1.0.0
+[Unreleased]: https://gitlab.com/wirepusher/wirepusher-csharp/-/compare/v1.0.0...main
+[1.0.0]: https://gitlab.com/wirepusher/wirepusher-csharp/-/tags/v1.0.0
