@@ -11,7 +11,7 @@ namespace WirePusher.Tests;
 public class WirePusherClientTests
 {
     private const string TestToken = "wpt_test_token";
-    private const string TestUserId = "test_user_123";
+    private const string TestDeviceId = "test_user_123";
 
     [Fact]
     public void Constructor_WithValidToken_CreatesClient()
@@ -21,9 +21,9 @@ public class WirePusherClientTests
     }
 
     [Fact]
-    public void Constructor_WithValidUserId_CreatesClient()
+    public void Constructor_WithValidDeviceId_CreatesClient()
     {
-        var client = new WirePusherClient(null, TestUserId);
+        var client = new WirePusherClient(null, TestDeviceId);
         Assert.NotNull(client);
     }
 
@@ -35,9 +35,9 @@ public class WirePusherClientTests
     }
 
     [Fact]
-    public void Constructor_WithBothTokenAndUserId_ThrowsArgumentException()
+    public void Constructor_WithBothTokenAndDeviceId_ThrowsArgumentException()
     {
-        Assert.Throws<ArgumentException>(() => new WirePusherClient(TestToken, TestUserId));
+        Assert.Throws<ArgumentException>(() => new WirePusherClient(TestToken, TestDeviceId));
     }
 
     [Theory]
@@ -46,9 +46,9 @@ public class WirePusherClientTests
     [InlineData("   ", "   ")]
     [InlineData(null, "")]
     [InlineData("", null)]
-    public void Constructor_WithNeitherTokenNorUserId_ThrowsArgumentException(string? token, string? userId)
+    public void Constructor_WithNeitherTokenNorDeviceId_ThrowsArgumentException(string? token, string? deviceId)
     {
-        Assert.Throws<ArgumentException>(() => new WirePusherClient(token!, userId!));
+        Assert.Throws<ArgumentException>(() => new WirePusherClient(token!, deviceId!));
     }
 
     [Fact]
@@ -146,18 +146,19 @@ public class WirePusherClientTests
     }
 
     [Fact]
-    public async Task SendAsync_WithServerError_ThrowsWirePusherException()
+    public async Task SendAsync_WithServerError_ThrowsServerException()
     {
         var httpClient = CreateMockHttpClient(HttpStatusCode.InternalServerError,
-            new { status = "error", message = "Server error" });
+            new { status = "error", message = "Server error" }, maxRetries: 0);
 
-        var client = new WirePusherClient(TestToken, null, httpClient);
+        var client = new WirePusherClient(TestToken, null, httpClient, 0);
 
-        var exception = await Assert.ThrowsAsync<WirePusherException>(() =>
+        var exception = await Assert.ThrowsAsync<ServerException>(() =>
             client.SendAsync("Test", "Message"));
 
         Assert.Equal(500, exception.StatusCode);
         Assert.Contains("Server error", exception.Message);
+        Assert.True(exception.IsRetryable);
     }
 
     [Fact]
@@ -368,7 +369,277 @@ public class WirePusherClientTests
         Assert.Equal(2, tags.GetArrayLength());
     }
 
-    private static HttpClient CreateMockHttpClient(HttpStatusCode statusCode, object responseContent)
+    [Fact]
+    public async Task SendNotificationAsync_WithTags_NormalizesTags()
+    {
+        string? capturedPayload = null;
+
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage request, CancellationToken _) =>
+            {
+                capturedPayload = request.Content?.ReadAsStringAsync().Result;
+                return new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent(
+                        JsonSerializer.Serialize(new NotificationResponse("success", "Sent")),
+                        Encoding.UTF8,
+                        "application/json")
+                };
+            });
+
+        var httpClient = new HttpClient(mockHandler.Object)
+        {
+            BaseAddress = new Uri("https://api.test.com")
+        };
+
+        var client = new WirePusherClient(TestToken, null, httpClient);
+
+        var notification = new Notification
+        {
+            Title = "Test",
+            Message = "Message",
+            Tags = new[] { "  PROD  ", "prod", "Backend@123", "test-env_1", "TEST-ENV_1" }
+        };
+
+        await client.SendNotificationAsync(notification);
+
+        Assert.NotNull(capturedPayload);
+        var payload = JsonSerializer.Deserialize<JsonElement>(capturedPayload);
+        var tags = payload.GetProperty("tags");
+        Assert.Equal(3, tags.GetArrayLength());
+        Assert.Equal("prod", tags[0].GetString());
+        Assert.Equal("backend123", tags[1].GetString());
+        Assert.Equal("test-env_1", tags[2].GetString());
+    }
+
+    [Fact]
+    public async Task NotifAIAsync_WithSimpleInput_SendsRequest()
+    {
+        var httpClient = CreateMockHttpClient(HttpStatusCode.OK,
+            new NotificationResponse("success", "AI notification sent"));
+
+        var client = new WirePusherClient(TestToken, null, httpClient);
+
+        var response = await client.NotifAIAsync("deployment finished, v2.1.3 is live");
+
+        Assert.NotNull(response);
+        Assert.True(response.IsSuccess);
+    }
+
+    [Fact]
+    public async Task NotifAIAsync_WithRequest_SendsRequest()
+    {
+        string? capturedPayload = null;
+
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage request, CancellationToken _) =>
+            {
+                capturedPayload = request.Content?.ReadAsStringAsync().Result;
+                return new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent(
+                        JsonSerializer.Serialize(new NotificationResponse("success", "Sent")),
+                        Encoding.UTF8,
+                        "application/json")
+                };
+            });
+
+        var httpClient = new HttpClient(mockHandler.Object)
+        {
+            BaseAddress = new Uri("https://api.test.com")
+        };
+
+        var client = new WirePusherClient(TestToken, null, httpClient);
+
+        var request = new NotifAIRequest
+        {
+            Input = "server CPU at 95%",
+            Type = "alert"
+        };
+
+        await client.NotifAIAsync(request);
+
+        Assert.NotNull(capturedPayload);
+        var payload = JsonSerializer.Deserialize<JsonElement>(capturedPayload);
+        Assert.Equal("server CPU at 95%", payload.GetProperty("input").GetString());
+        Assert.Equal("alert", payload.GetProperty("type").GetString());
+    }
+
+    [Fact]
+    public async Task SendAsync_WithNetworkError_RetriesAndThrowsNetworkException()
+    {
+        var attemptCount = 0;
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() =>
+            {
+                attemptCount++;
+                throw new HttpRequestException("Network error");
+            });
+
+        var httpClient = new HttpClient(mockHandler.Object)
+        {
+            BaseAddress = new Uri("https://api.test.com")
+        };
+
+        var client = new WirePusherClient(TestToken, null, httpClient, maxRetries: 2);
+
+        var exception = await Assert.ThrowsAsync<NetworkException>(() =>
+            client.SendAsync("Test", "Message"));
+
+        Assert.Equal(3, attemptCount); // Initial attempt + 2 retries
+        Assert.Contains("after 3 attempts", exception.Message);
+        Assert.True(exception.IsRetryable);
+    }
+
+    [Fact]
+    public async Task SendAsync_WithRateLimit_RetriesWithBackoff()
+    {
+        var attemptCount = 0;
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() =>
+            {
+                attemptCount++;
+                if (attemptCount <= 2)
+                {
+                    return new HttpResponseMessage
+                    {
+                        StatusCode = (HttpStatusCode)429,
+                        Content = new StringContent(
+                            JsonSerializer.Serialize(new { status = "error", message = "Rate limit exceeded" }),
+                            Encoding.UTF8,
+                            "application/json")
+                    };
+                }
+                return new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent(
+                        JsonSerializer.Serialize(new NotificationResponse("success", "Sent")),
+                        Encoding.UTF8,
+                        "application/json")
+                };
+            });
+
+        var httpClient = new HttpClient(mockHandler.Object)
+        {
+            BaseAddress = new Uri("https://api.test.com"),
+            Timeout = TimeSpan.FromMinutes(1)
+        };
+
+        var client = new WirePusherClient(TestToken, null, httpClient, maxRetries: 3);
+
+        var response = await client.SendAsync("Test", "Message");
+
+        Assert.Equal(3, attemptCount); // Should retry twice and succeed on third attempt
+        Assert.True(response.IsSuccess);
+    }
+
+    [Fact]
+    public async Task SendAsync_WithServerError_RetriesAndSucceeds()
+    {
+        var attemptCount = 0;
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() =>
+            {
+                attemptCount++;
+                if (attemptCount == 1)
+                {
+                    return new HttpResponseMessage
+                    {
+                        StatusCode = HttpStatusCode.InternalServerError,
+                        Content = new StringContent(
+                            JsonSerializer.Serialize(new { status = "error", message = "Server error" }),
+                            Encoding.UTF8,
+                            "application/json")
+                    };
+                }
+                return new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent(
+                        JsonSerializer.Serialize(new NotificationResponse("success", "Sent")),
+                        Encoding.UTF8,
+                        "application/json")
+                };
+            });
+
+        var httpClient = new HttpClient(mockHandler.Object)
+        {
+            BaseAddress = new Uri("https://api.test.com"),
+            Timeout = TimeSpan.FromMinutes(1)
+        };
+
+        var client = new WirePusherClient(TestToken, null, httpClient, maxRetries: 3);
+
+        var response = await client.SendAsync("Test", "Message");
+
+        Assert.Equal(2, attemptCount); // Should fail once, then succeed
+        Assert.True(response.IsSuccess);
+    }
+
+    [Fact]
+    public async Task SendAsync_WithValidationError_DoesNotRetry()
+    {
+        var attemptCount = 0;
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() =>
+            {
+                attemptCount++;
+                return new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.BadRequest,
+                    Content = new StringContent(
+                        JsonSerializer.Serialize(new { status = "error", message = "Title is required" }),
+                        Encoding.UTF8,
+                        "application/json")
+                };
+            });
+
+        var httpClient = new HttpClient(mockHandler.Object)
+        {
+            BaseAddress = new Uri("https://api.test.com")
+        };
+
+        var client = new WirePusherClient(TestToken, null, httpClient, maxRetries: 3);
+
+        await Assert.ThrowsAsync<ValidationException>(() => client.SendAsync("", "Message"));
+
+        Assert.Equal(1, attemptCount); // Should not retry validation errors
+    }
+
+    private static HttpClient CreateMockHttpClient(HttpStatusCode statusCode, object responseContent, int maxRetries = 0)
     {
         var json = JsonSerializer.Serialize(responseContent);
         var mockHandler = new Mock<HttpMessageHandler>();

@@ -28,4 +28,35 @@ public interface IWirePusherClient
     Task<NotificationResponse> SendNotificationAsync(
         Notification notification,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sends an AI-generated notification using free-form text input.
+    /// </summary>
+    /// <param name="input">The free-form input text to convert to a notification.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The notification response.</returns>
+    /// <exception cref="WirePusher.Exceptions.WirePusherException">Thrown when the request fails.</exception>
+    /// <remarks>
+    /// NotifAI uses Gemini AI to convert free-form text into structured notifications
+    /// with automatically generated title, message, tags, and action URL.
+    /// Examples: "deployment finished, v2.1.3 is live", "server CPU at 95%"
+    /// </remarks>
+    Task<NotificationResponse> NotifAIAsync(
+        string input,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sends an AI-generated notification with full options.
+    /// </summary>
+    /// <param name="request">The NotifAI request with input and optional type/encryption.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The notification response.</returns>
+    /// <exception cref="WirePusher.Exceptions.WirePusherException">Thrown when the request fails.</exception>
+    /// <remarks>
+    /// NotifAI uses Gemini AI to convert free-form text into structured notifications
+    /// with automatically generated title, message, tags, and action URL.
+    /// </remarks>
+    Task<NotificationResponse> NotifAIAsync(
+        NotifAIRequest request,
+        CancellationToken cancellationToken = default);
 }

@@ -1,4 +1,4 @@
-# Cloud Build configuration for WirePusher C# SDK
+# Cloud Build configuration for WirePusher C# Client Library
 # Runs tests, code coverage checks, and builds the package
 
 steps:
@@ -110,7 +110,7 @@ options:
 # Artifacts to save
 artifacts:
   objects:
-    location: 'gs://wirepusher-build-artifacts/csharp-sdk/$BUILD_ID'
+    location: 'gs://wirepusher-build-artifacts/wirepusher-csharp/$BUILD_ID'
     paths:
       - 'artifacts/*.nupkg'
       - 'coveragereport/*'
