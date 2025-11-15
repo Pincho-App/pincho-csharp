@@ -104,7 +104,7 @@ public class WirePusherClientTests
     public async Task SendAsync_WithAuthenticationError_ThrowsAuthenticationException()
     {
         var httpClient = CreateMockHttpClient(HttpStatusCode.Unauthorized,
-            new { status = "error", message = "Invalid token" });
+            new { status = "error", error = new { type = "authentication_error", code = "invalid_token", message = "Invalid token" } });
 
         var client = new WirePusherClient(TestToken, null, httpClient);
 
@@ -113,13 +113,14 @@ public class WirePusherClientTests
 
         Assert.Equal(401, exception.StatusCode);
         Assert.Contains("Invalid token", exception.Message);
+        Assert.Contains("invalid_token", exception.Message);
     }
 
     [Fact]
     public async Task SendAsync_WithValidationError_ThrowsValidationException()
     {
         var httpClient = CreateMockHttpClient(HttpStatusCode.BadRequest,
-            new { status = "error", message = "Title is required" });
+            new { status = "error", error = new { type = "validation_error", code = "invalid_parameter", message = "Title is required", param = "title" } });
 
         var client = new WirePusherClient(TestToken, null, httpClient);
 
@@ -128,13 +129,15 @@ public class WirePusherClientTests
 
         Assert.Equal(400, exception.StatusCode);
         Assert.Contains("Title is required", exception.Message);
+        Assert.Contains("parameter: title", exception.Message);
+        Assert.Contains("invalid_parameter", exception.Message);
     }
 
     [Fact]
     public async Task SendAsync_WithRateLimitError_ThrowsRateLimitException()
     {
         var httpClient = CreateMockHttpClient((HttpStatusCode)429,
-            new { status = "error", message = "Rate limit exceeded" });
+            new { status = "error", error = new { type = "rate_limit_error", code = "rate_limit_exceeded", message = "Rate limit exceeded" } });
 
         var client = new WirePusherClient(TestToken, null, httpClient);
 
@@ -143,13 +146,14 @@ public class WirePusherClientTests
 
         Assert.Equal(429, exception.StatusCode);
         Assert.Contains("Rate limit exceeded", exception.Message);
+        Assert.Contains("rate_limit_exceeded", exception.Message);
     }
 
     [Fact]
     public async Task SendAsync_WithServerError_ThrowsServerException()
     {
         var httpClient = CreateMockHttpClient(HttpStatusCode.InternalServerError,
-            new { status = "error", message = "Server error" }, maxRetries: 0);
+            new { status = "error", error = new { type = "server_error", code = "internal_error", message = "Server error" } }, maxRetries: 0);
 
         var client = new WirePusherClient(TestToken, null, httpClient, 0);
 
@@ -527,7 +531,7 @@ public class WirePusherClientTests
                     {
                         StatusCode = (HttpStatusCode)429,
                         Content = new StringContent(
-                            JsonSerializer.Serialize(new { status = "error", message = "Rate limit exceeded" }),
+                            JsonSerializer.Serialize(new { status = "error", error = new { type = "rate_limit_error", code = "rate_limit_exceeded", message = "Rate limit exceeded" } }),
                             Encoding.UTF8,
                             "application/json")
                     };
@@ -575,7 +579,7 @@ public class WirePusherClientTests
                     {
                         StatusCode = HttpStatusCode.InternalServerError,
                         Content = new StringContent(
-                            JsonSerializer.Serialize(new { status = "error", message = "Server error" }),
+                            JsonSerializer.Serialize(new { status = "error", error = new { type = "server_error", code = "internal_error", message = "Server error" } }),
                             Encoding.UTF8,
                             "application/json")
                     };
@@ -621,7 +625,7 @@ public class WirePusherClientTests
                 {
                     StatusCode = HttpStatusCode.BadRequest,
                     Content = new StringContent(
-                        JsonSerializer.Serialize(new { status = "error", message = "Title is required" }),
+                        JsonSerializer.Serialize(new { status = "error", error = new { type = "validation_error", code = "invalid_parameter", message = "Title is required", param = "title" } }),
                         Encoding.UTF8,
                         "application/json")
                 };

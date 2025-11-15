@@ -296,14 +296,30 @@ public class WirePusherClient : IWirePusherClient
             }
         }
 
-        // Extract error message
+        // Extract error message from nested error object
         string errorMessage;
         try
         {
-            var errorBody = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content);
-            errorMessage = errorBody?.TryGetValue("message", out var msg) == true
-                ? msg.GetString() ?? "Unknown error"
-                : "Unknown error";
+            var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(content, _jsonOptions);
+            if (errorResponse?.Error?.Message != null)
+            {
+                // Build descriptive error message with code and param when available
+                errorMessage = errorResponse.Error.Message;
+
+                if (!string.IsNullOrWhiteSpace(errorResponse.Error.Param))
+                {
+                    errorMessage = $"{errorMessage} (parameter: {errorResponse.Error.Param})";
+                }
+
+                if (!string.IsNullOrWhiteSpace(errorResponse.Error.Code))
+                {
+                    errorMessage = $"{errorMessage} [{errorResponse.Error.Code}]";
+                }
+            }
+            else
+            {
+                errorMessage = $"HTTP {statusCode}: {content}";
+            }
         }
         catch
         {
