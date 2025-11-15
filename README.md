@@ -56,7 +56,7 @@ await client.SendAsync(
 ```csharp
 using WirePusher;
 
-var client = new WirePusherClient("wpt_abc123xyz", null);
+var client = new WirePusherClient("abc12345", null);
 
 var response = await client.SendAsync(
     "Deploy Complete",
@@ -70,7 +70,7 @@ Console.WriteLine(response.Status);  // "success"
 ```csharp
 using WirePusher;
 
-var client = new WirePusherClient("wpt_abc123xyz", null);
+var client = new WirePusherClient("abc12345", null);
 
 var notification = new Notification
 {
@@ -92,7 +92,7 @@ var response = await client.SendNotificationAsync(notification);
 ```json
 {
   "WirePusher": {
-    "Token": "wpt_your_token_here"
+    "Token": "abc12345"
   }
 }
 ```
@@ -191,7 +191,7 @@ WirePusherClient(string token, HttpClient httpClient)
 ```
 
 **Parameters:**
-- `token` (required): Your WirePusher token (starts with `wpt_`)
+- `token` (required): Your WirePusher token
 - `timeout` (optional): Request timeout (default: 30 seconds)
 - `httpClient` (optional): Custom HTTP client
 

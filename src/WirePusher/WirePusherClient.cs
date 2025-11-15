@@ -16,7 +16,7 @@ namespace WirePusher;
 /// <example>
 /// <code>
 /// // Simple send
-/// var client = new WirePusherClient("wpt_your_token", null);
+/// var client = new WirePusherClient("abc12345", null);
 /// await client.SendAsync("Build Failed", "Pipeline #123 failed");
 ///
 /// // Advanced send

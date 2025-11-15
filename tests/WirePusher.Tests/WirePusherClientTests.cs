@@ -10,7 +10,7 @@ namespace WirePusher.Tests;
 
 public class WirePusherClientTests
 {
-    private const string TestToken = "wpt_test_token";
+    private const string TestToken = "abc12345";
     private const string TestDeviceId = "test_user_123";
 
     [Fact]

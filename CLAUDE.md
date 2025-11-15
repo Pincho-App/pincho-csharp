@@ -54,7 +54,7 @@ wirepusher-csharp/
 - Follows .NET async best practices
 
 ```csharp
-var client = new WirePusherClient("wpt_abc123", null);
+var client = new WirePusherClient("abc12345", null);
 await client.SendAsync("Title", "Message", cancellationToken);
 ```
 
@@ -176,16 +176,16 @@ Constructor-based configuration (no config file support needed):
 
 ```csharp
 // Required
-var client = new WirePusherClient("wpt_abc123", null);
+var client = new WirePusherClient("abc12345", null);
 
 // Custom timeout
-var client = new WirePusherClient("wpt_abc123", null, TimeSpan.FromSeconds(60));
+var client = new WirePusherClient("abc12345", null, TimeSpan.FromSeconds(60));
 
 // Custom HttpClient (for testing)
-var client = new WirePusherClient("wpt_abc123", null, httpClient);
+var client = new WirePusherClient("abc12345", null, httpClient);
 
 // Custom max retries
-var client = new WirePusherClient("wpt_abc123", null, httpClient, maxRetries: 5);
+var client = new WirePusherClient("abc12345", null, httpClient, maxRetries: 5);
 ```
 
 ## Dependencies

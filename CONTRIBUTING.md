@@ -48,7 +48,7 @@ dotnet build -p:TreatWarningsAsErrors=true
 ```csharp
 using WirePusher;
 
-var client = new WirePusherClient("wpt_abc123", null);
+var client = new WirePusherClient("abc12345", null);
 await client.SendAsync("Title", "Message");
 ```
 

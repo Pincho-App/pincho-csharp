@@ -67,7 +67,7 @@ When using the WirePusher C# Client Library:
 
 ```csharp
 // ❌ Bad - Hardcoded credentials
-var client = new WirePusherClient("wpt_abc12345", null);
+var client = new WirePusherClient("abc12345", null);
 
 // ✅ Good - Environment variables
 var token = Environment.GetEnvironmentVariable("WIREPUSHER_TOKEN");
