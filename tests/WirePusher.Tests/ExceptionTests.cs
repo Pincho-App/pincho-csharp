@@ -63,4 +63,76 @@ public class ExceptionTests
         Assert.Equal("Rate limit exceeded", exception.Message);
         Assert.Equal(429, exception.StatusCode);
     }
+
+    [Fact]
+    public void WirePusherException_IsNotRetryable_ByDefault()
+    {
+        var exception = new WirePusherException("Test error");
+        Assert.False(exception.IsRetryable);
+    }
+
+    [Fact]
+    public void AuthenticationException_IsNotRetryable()
+    {
+        var exception = new AuthenticationException("Invalid token", 401);
+        Assert.False(exception.IsRetryable);
+    }
+
+    [Fact]
+    public void ValidationException_IsNotRetryable()
+    {
+        var exception = new ValidationException("Title is required", 400);
+        Assert.False(exception.IsRetryable);
+    }
+
+    [Fact]
+    public void RateLimitException_IsRetryable()
+    {
+        var exception = new RateLimitException("Rate limit exceeded", 429);
+        Assert.True(exception.IsRetryable);
+    }
+
+    [Fact]
+    public void ServerException_InheritsFromWirePusherException()
+    {
+        var exception = new ServerException("Internal server error", 500);
+
+        Assert.IsAssignableFrom<WirePusherException>(exception);
+        Assert.Equal("Internal server error", exception.Message);
+        Assert.Equal(500, exception.StatusCode);
+    }
+
+    [Fact]
+    public void ServerException_IsRetryable()
+    {
+        var exception = new ServerException("Internal server error", 500);
+        Assert.True(exception.IsRetryable);
+    }
+
+    [Fact]
+    public void NetworkException_InheritsFromWirePusherException()
+    {
+        var exception = new NetworkException("Connection failed");
+
+        Assert.IsAssignableFrom<WirePusherException>(exception);
+        Assert.Equal("Connection failed", exception.Message);
+        Assert.Equal(0, exception.StatusCode);
+    }
+
+    [Fact]
+    public void NetworkException_IsRetryable()
+    {
+        var exception = new NetworkException("Connection failed");
+        Assert.True(exception.IsRetryable);
+    }
+
+    [Fact]
+    public void NetworkException_WithInnerException_PreservesInner()
+    {
+        var inner = new Exception("Inner");
+        var exception = new NetworkException("Connection failed", inner);
+
+        Assert.Same(inner, exception.InnerException);
+        Assert.True(exception.IsRetryable);
+    }
 }
