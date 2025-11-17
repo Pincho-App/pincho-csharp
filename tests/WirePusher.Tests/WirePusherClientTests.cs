@@ -104,7 +104,7 @@ public class WirePusherClientTests
     public async Task SendAsync_WithAuthenticationError_ThrowsAuthenticationException()
     {
         var httpClient = CreateMockHttpClient(HttpStatusCode.Unauthorized,
-            new { status = "error", message = "Invalid token" });
+            new { status = "error", error = new { type = "authentication_error", code = "invalid_token", message = "Invalid token" } });
 
         var client = new WirePusherClient(TestToken, null, httpClient);
 
@@ -119,7 +119,7 @@ public class WirePusherClientTests
     public async Task SendAsync_WithValidationError_ThrowsValidationException()
     {
         var httpClient = CreateMockHttpClient(HttpStatusCode.BadRequest,
-            new { status = "error", message = "Title is required" });
+            new { status = "error", error = new { type = "validation_error", code = "missing_parameter", message = "Title is required", param = "title" } });
 
         var client = new WirePusherClient(TestToken, null, httpClient);
 
@@ -134,7 +134,7 @@ public class WirePusherClientTests
     public async Task SendAsync_WithRateLimitError_ThrowsRateLimitException()
     {
         var httpClient = CreateMockHttpClient((HttpStatusCode)429,
-            new { status = "error", message = "Rate limit exceeded" });
+            new { status = "error", error = new { type = "rate_limit_error", code = "too_many_requests", message = "Rate limit exceeded" } });
 
         var client = new WirePusherClient(TestToken, null, httpClient);
 
@@ -149,7 +149,7 @@ public class WirePusherClientTests
     public async Task SendAsync_WithServerError_ThrowsServerException()
     {
         var httpClient = CreateMockHttpClient(HttpStatusCode.InternalServerError,
-            new { status = "error", message = "Server error" }, maxRetries: 0);
+            new { status = "error", error = new { type = "server_error", code = "internal_error", message = "Server error" } }, maxRetries: 0);
 
         var client = new WirePusherClient(TestToken, null, httpClient, 0);
 
