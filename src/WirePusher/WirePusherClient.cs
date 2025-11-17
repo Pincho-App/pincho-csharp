@@ -32,7 +32,7 @@ namespace WirePusher;
 /// </example>
 public class WirePusherClient : IWirePusherClient
 {
-    private const string DefaultBaseUrl = "https://wirepusher-gateway-1xatwfdc.uc.gateway.dev";
+    private const string DefaultBaseUrl = "https://api.wirepusher.dev/";
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
     private const int DefaultMaxRetries = 3;
     private static readonly TimeSpan InitialRetryDelay = TimeSpan.FromSeconds(1);
