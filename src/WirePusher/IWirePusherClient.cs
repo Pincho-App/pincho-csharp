@@ -30,9 +30,9 @@ public interface IWirePusherClient
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Sends an AI-generated notification using free-form text input.
+    /// Sends an AI-generated notification using free-form text.
     /// </summary>
-    /// <param name="input">The free-form input text to convert to a notification.</param>
+    /// <param name="text">The free-form text to convert to a notification.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The notification response.</returns>
     /// <exception cref="WirePusher.Exceptions.WirePusherException">Thrown when the request fails.</exception>
@@ -42,7 +42,7 @@ public interface IWirePusherClient
     /// Examples: "deployment finished, v2.1.3 is live", "server CPU at 95%"
     /// </remarks>
     Task<NotificationResponse> NotifAIAsync(
-        string input,
+        string text,
         CancellationToken cancellationToken = default);
 
     /// <summary>

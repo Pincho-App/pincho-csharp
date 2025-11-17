@@ -11,44 +11,28 @@ namespace WirePusher.Tests;
 public class WirePusherClientTests
 {
     private const string TestToken = "abc12345";
-    private const string TestDeviceId = "test_user_123";
 
     [Fact]
     public void Constructor_WithValidToken_CreatesClient()
     {
-        var client = new WirePusherClient(TestToken, null);
-        Assert.NotNull(client);
-    }
-
-    [Fact]
-    public void Constructor_WithValidDeviceId_CreatesClient()
-    {
-        var client = new WirePusherClient(null, TestDeviceId);
+        var client = new WirePusherClient(TestToken);
         Assert.NotNull(client);
     }
 
     [Fact]
     public void Constructor_WithTimeout_CreatesClient()
     {
-        var client = new WirePusherClient(TestToken, null, TimeSpan.FromSeconds(60));
+        var client = new WirePusherClient(TestToken, TimeSpan.FromSeconds(60));
         Assert.NotNull(client);
     }
 
-    [Fact]
-    public void Constructor_WithBothTokenAndDeviceId_ThrowsArgumentException()
-    {
-        Assert.Throws<ArgumentException>(() => new WirePusherClient(TestToken, TestDeviceId));
-    }
-
     [Theory]
-    [InlineData(null, null)]
-    [InlineData("", "")]
-    [InlineData("   ", "   ")]
-    [InlineData(null, "")]
-    [InlineData("", null)]
-    public void Constructor_WithNeitherTokenNorDeviceId_ThrowsArgumentException(string? token, string? deviceId)
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Constructor_WithEmptyToken_ThrowsArgumentException(string? token)
     {
-        Assert.Throws<ArgumentException>(() => new WirePusherClient(token!, deviceId!));
+        Assert.Throws<ArgumentException>(() => new WirePusherClient(token!));
     }
 
     [Fact]
@@ -57,7 +41,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient(HttpStatusCode.OK,
             new NotificationResponse("success", "Notification sent successfully"));
 
-        var client = new WirePusherClient(TestToken, null, httpClient);
+        var client = new WirePusherClient(TestToken, httpClient);
 
         var response = await client.SendAsync("Test Title", "Test Message");
 
@@ -73,7 +57,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient(HttpStatusCode.OK,
             new NotificationResponse("success", "Notification sent successfully"));
 
-        var client = new WirePusherClient(TestToken, null, httpClient);
+        var client = new WirePusherClient(TestToken, httpClient);
 
         var notification = new Notification
         {
@@ -94,7 +78,9 @@ public class WirePusherClientTests
     [Fact]
     public async Task SendNotificationAsync_WithNullNotification_ThrowsArgumentNullException()
     {
-        var client = new WirePusherClient(TestToken, null);
+        var httpClient = CreateMockHttpClient(HttpStatusCode.OK,
+            new NotificationResponse("success", "Test"));
+        var client = new WirePusherClient(TestToken, httpClient);
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
             client.SendNotificationAsync(null!));
@@ -106,7 +92,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient(HttpStatusCode.Unauthorized,
             new { status = "error", error = new { type = "authentication_error", code = "invalid_token", message = "Invalid token" } });
 
-        var client = new WirePusherClient(TestToken, null, httpClient);
+        var client = new WirePusherClient(TestToken, httpClient);
 
         var exception = await Assert.ThrowsAsync<AuthenticationException>(() =>
             client.SendAsync("Test", "Message"));
@@ -121,7 +107,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient(HttpStatusCode.BadRequest,
             new { status = "error", error = new { type = "validation_error", code = "missing_parameter", message = "Title is required", param = "title" } });
 
-        var client = new WirePusherClient(TestToken, null, httpClient);
+        var client = new WirePusherClient(TestToken, httpClient);
 
         var exception = await Assert.ThrowsAsync<ValidationException>(() =>
             client.SendAsync("", "Message"));
@@ -136,7 +122,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient((HttpStatusCode)429,
             new { status = "error", error = new { type = "rate_limit_error", code = "too_many_requests", message = "Rate limit exceeded" } });
 
-        var client = new WirePusherClient(TestToken, null, httpClient);
+        var client = new WirePusherClient(TestToken, httpClient);
 
         var exception = await Assert.ThrowsAsync<RateLimitException>(() =>
             client.SendAsync("Test", "Message"));
@@ -151,7 +137,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient(HttpStatusCode.InternalServerError,
             new { status = "error", error = new { type = "server_error", code = "internal_error", message = "Server error" } }, maxRetries: 0);
 
-        var client = new WirePusherClient(TestToken, null, httpClient, 0);
+        var client = new WirePusherClient(TestToken, httpClient, 0);
 
         var exception = await Assert.ThrowsAsync<ServerException>(() =>
             client.SendAsync("Test", "Message"));
@@ -181,7 +167,7 @@ public class WirePusherClientTests
             BaseAddress = new Uri("https://api.test.com")
         };
 
-        var client = new WirePusherClient(TestToken, null, httpClient);
+        var client = new WirePusherClient(TestToken, httpClient);
 
         await Assert.ThrowsAsync<WirePusherException>(() =>
             client.SendAsync("Test", "Message"));
@@ -216,7 +202,7 @@ public class WirePusherClientTests
             BaseAddress = new Uri("https://api.test.com")
         };
 
-        var client = new WirePusherClient(TestToken, null, httpClient);
+        var client = new WirePusherClient(TestToken, httpClient);
 
         var notification = new Notification
         {
@@ -279,7 +265,7 @@ public class WirePusherClientTests
             BaseAddress = new Uri("https://api.test.com")
         };
 
-        var client = new WirePusherClient(TestToken, null, httpClient);
+        var client = new WirePusherClient(TestToken, httpClient);
 
         var notification = new Notification
         {
@@ -333,7 +319,7 @@ public class WirePusherClientTests
             BaseAddress = new Uri("https://api.test.com")
         };
 
-        var client = new WirePusherClient(TestToken, null, httpClient);
+        var client = new WirePusherClient(TestToken, httpClient);
 
         var notification = new Notification
         {
@@ -362,8 +348,8 @@ public class WirePusherClientTests
 
         // Verify other fields are NOT encrypted
         Assert.Equal("info", payload.GetProperty("type").GetString());
-        Assert.Equal("https://example.com/image.png", payload.GetProperty("image_url").GetString());
-        Assert.Equal("https://example.com", payload.GetProperty("action_url").GetString());
+        Assert.Equal("https://example.com/image.png", payload.GetProperty("imageURL").GetString());
+        Assert.Equal("https://example.com", payload.GetProperty("actionURL").GetString());
 
         var tags = payload.GetProperty("tags");
         Assert.Equal(2, tags.GetArrayLength());
@@ -398,7 +384,7 @@ public class WirePusherClientTests
             BaseAddress = new Uri("https://api.test.com")
         };
 
-        var client = new WirePusherClient(TestToken, null, httpClient);
+        var client = new WirePusherClient(TestToken, httpClient);
 
         var notification = new Notification
         {
@@ -424,7 +410,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient(HttpStatusCode.OK,
             new NotificationResponse("success", "AI notification sent"));
 
-        var client = new WirePusherClient(TestToken, null, httpClient);
+        var client = new WirePusherClient(TestToken, httpClient);
 
         var response = await client.NotifAIAsync("deployment finished, v2.1.3 is live");
 
@@ -461,11 +447,11 @@ public class WirePusherClientTests
             BaseAddress = new Uri("https://api.test.com")
         };
 
-        var client = new WirePusherClient(TestToken, null, httpClient);
+        var client = new WirePusherClient(TestToken, httpClient);
 
         var request = new NotifAIRequest
         {
-            Input = "server CPU at 95%",
+            Text = "server CPU at 95%",
             Type = "alert"
         };
 
@@ -473,7 +459,7 @@ public class WirePusherClientTests
 
         Assert.NotNull(capturedPayload);
         var payload = JsonSerializer.Deserialize<JsonElement>(capturedPayload);
-        Assert.Equal("server CPU at 95%", payload.GetProperty("input").GetString());
+        Assert.Equal("server CPU at 95%", payload.GetProperty("text").GetString());
         Assert.Equal("alert", payload.GetProperty("type").GetString());
     }
 
@@ -498,7 +484,7 @@ public class WirePusherClientTests
             BaseAddress = new Uri("https://api.test.com")
         };
 
-        var client = new WirePusherClient(TestToken, null, httpClient, maxRetries: 2);
+        var client = new WirePusherClient(TestToken, httpClient,2);
 
         var exception = await Assert.ThrowsAsync<NetworkException>(() =>
             client.SendAsync("Test", "Message"));
@@ -548,7 +534,7 @@ public class WirePusherClientTests
             Timeout = TimeSpan.FromMinutes(1)
         };
 
-        var client = new WirePusherClient(TestToken, null, httpClient, maxRetries: 3);
+        var client = new WirePusherClient(TestToken, httpClient,3);
 
         var response = await client.SendAsync("Test", "Message");
 
@@ -596,7 +582,7 @@ public class WirePusherClientTests
             Timeout = TimeSpan.FromMinutes(1)
         };
 
-        var client = new WirePusherClient(TestToken, null, httpClient, maxRetries: 3);
+        var client = new WirePusherClient(TestToken, httpClient,3);
 
         var response = await client.SendAsync("Test", "Message");
 
@@ -632,7 +618,7 @@ public class WirePusherClientTests
             BaseAddress = new Uri("https://api.test.com")
         };
 
-        var client = new WirePusherClient(TestToken, null, httpClient, maxRetries: 3);
+        var client = new WirePusherClient(TestToken, httpClient,3);
 
         await Assert.ThrowsAsync<ValidationException>(() => client.SendAsync("", "Message"));
 

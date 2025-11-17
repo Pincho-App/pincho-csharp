@@ -54,7 +54,7 @@ wirepusher-csharp/
 - Follows .NET async best practices
 
 ```csharp
-var client = new WirePusherClient("abc12345", null);
+var client = new WirePusherClient("abc12345");
 await client.SendAsync("Title", "Message", cancellationToken);
 ```
 
@@ -82,7 +82,7 @@ await client.NotifAIAsync("deployment finished successfully, v2.1.3 is live on p
 // With type override
 var request = new NotifAIRequest
 {
-    Input = "deployment finished successfully, v2.1.3 is live on prod",
+    Text = "deployment finished successfully, v2.1.3 is live on prod",
     Type = "deployment"
 };
 await client.NotifAIAsync(request);
@@ -145,7 +145,7 @@ Interface-based design for ASP.NET Core:
 builder.Services.AddSingleton<IWirePusherClient>(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
-    return new WirePusherClient(config["WirePusher:Token"]!, null);
+    return new WirePusherClient(config["WirePusher:Token"]!);
 });
 
 // Service
@@ -175,17 +175,17 @@ Implementation: `EncryptionUtil.cs`
 Constructor-based configuration (no config file support needed):
 
 ```csharp
-// Required
-var client = new WirePusherClient("abc12345", null);
+// Token only (default settings)
+var client = new WirePusherClient("abc12345");
 
 // Custom timeout
-var client = new WirePusherClient("abc12345", null, TimeSpan.FromSeconds(60));
+var client = new WirePusherClient("abc12345", TimeSpan.FromSeconds(60));
 
 // Custom HttpClient (for testing)
-var client = new WirePusherClient("abc12345", null, httpClient);
+var client = new WirePusherClient("abc12345", httpClient);
 
 // Custom max retries
-var client = new WirePusherClient("abc12345", null, httpClient, maxRetries: 5);
+var client = new WirePusherClient("abc12345", httpClient, maxRetries: 5);
 ```
 
 ## Dependencies

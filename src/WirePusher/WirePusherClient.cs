@@ -41,8 +41,7 @@ public class WirePusherClient : IWirePusherClient
     private const string UserAgent = $"WirePusher-CSharp/{SdkVersion}";
 
     private readonly HttpClient _httpClient;
-    private readonly string? _token;
-    private readonly string? _deviceId;
+    private readonly string _token;
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly int _maxRetries;
     private TimeSpan? _lastRetryAfter;
@@ -50,73 +49,50 @@ public class WirePusherClient : IWirePusherClient
     /// <summary>
     /// Initializes a new instance of the <see cref="WirePusherClient"/> class.
     /// </summary>
-    /// <param name="token">The WirePusher API token (pass null if using deviceId).</param>
-    /// <param name="deviceId">The WirePusher device ID (pass null if using token). DEPRECATED: Legacy authentication. Use Token parameter instead.</param>
-    /// <exception cref="ArgumentException">Thrown when both or neither credentials are provided.</exception>
-    public WirePusherClient(
-        string? token,
-        string? deviceId)
-        : this(token, deviceId, CreateDefaultHttpClient(), DefaultMaxRetries)
+    /// <param name="token">The WirePusher API token.</param>
+    /// <exception cref="ArgumentException">Thrown when token is null or empty.</exception>
+    public WirePusherClient(string token)
+        : this(token, CreateDefaultHttpClient(token), DefaultMaxRetries)
     {
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WirePusherClient"/> class.
     /// </summary>
-    /// <param name="token">The WirePusher API token (pass null if using deviceId).</param>
-    /// <param name="deviceId">The WirePusher device ID (pass null if using token). DEPRECATED: Legacy authentication. Use Token parameter instead.</param>
+    /// <param name="token">The WirePusher API token.</param>
     /// <param name="timeout">The request timeout.</param>
-    /// <exception cref="ArgumentException">Thrown when both or neither credentials are provided.</exception>
-    public WirePusherClient(
-        string? token,
-        string? deviceId,
-        TimeSpan timeout)
-        : this(token, deviceId, CreateDefaultHttpClient(timeout), DefaultMaxRetries)
+    /// <exception cref="ArgumentException">Thrown when token is null or empty.</exception>
+    public WirePusherClient(string token, TimeSpan timeout)
+        : this(token, CreateDefaultHttpClient(token, timeout), DefaultMaxRetries)
     {
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WirePusherClient"/> class.
     /// </summary>
-    /// <param name="token">The WirePusher API token (pass null if using deviceId).</param>
-    /// <param name="deviceId">The WirePusher device ID (pass null if using token). DEPRECATED: Legacy authentication. Use Token parameter instead.</param>
+    /// <param name="token">The WirePusher API token.</param>
     /// <param name="httpClient">A custom HTTP client (for testing or advanced scenarios).</param>
-    /// <exception cref="ArgumentException">Thrown when both or neither credentials are provided.</exception>
+    /// <exception cref="ArgumentException">Thrown when token is null or empty.</exception>
     /// <exception cref="ArgumentNullException">Thrown when httpClient is null.</exception>
-    public WirePusherClient(
-        string? token,
-        string? deviceId,
-        HttpClient httpClient)
-        : this(token, deviceId, httpClient, DefaultMaxRetries)
+    public WirePusherClient(string token, HttpClient httpClient)
+        : this(token, httpClient, DefaultMaxRetries)
     {
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WirePusherClient"/> class.
     /// </summary>
-    /// <param name="token">The WirePusher API token (pass null if using deviceId).</param>
-    /// <param name="deviceId">The WirePusher device ID (pass null if using token). DEPRECATED: Legacy authentication. Use Token parameter instead.</param>
+    /// <param name="token">The WirePusher API token.</param>
     /// <param name="httpClient">A custom HTTP client (for testing or advanced scenarios).</param>
     /// <param name="maxRetries">The maximum number of retry attempts (default: 3).</param>
-    /// <exception cref="ArgumentException">Thrown when both or neither credentials are provided.</exception>
+    /// <exception cref="ArgumentException">Thrown when token is null or empty.</exception>
     /// <exception cref="ArgumentNullException">Thrown when httpClient is null.</exception>
-    public WirePusherClient(
-        string? token,
-        string? deviceId,
-        HttpClient httpClient,
-        int maxRetries)
+    public WirePusherClient(string token, HttpClient httpClient, int maxRetries)
     {
-        var hasToken = !string.IsNullOrWhiteSpace(token);
-        var hasDeviceId = !string.IsNullOrWhiteSpace(deviceId);
-
-        if (!hasToken && !hasDeviceId)
-            throw new ArgumentException("Either token or deviceId is required");
-
-        if (hasToken && hasDeviceId)
-            throw new ArgumentException("Token and deviceId are mutually exclusive - use one or the other, not both");
+        if (string.IsNullOrWhiteSpace(token))
+            throw new ArgumentException("Token is required", nameof(token));
 
         _token = token;
-        _deviceId = deviceId;
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _maxRetries = maxRetries >= 0 ? maxRetries : DefaultMaxRetries;
 
@@ -176,13 +152,6 @@ public class WirePusherClient : IWirePusherClient
                 ["message"] = finalMessage
             };
 
-            // Add authentication (token XOR deviceId)
-            if (_token != null)
-                payload["token"] = _token;
-
-            if (_deviceId != null)
-                payload["id"] = _deviceId;
-
             if (notification.Type != null)
                 payload["type"] = notification.Type;
 
@@ -190,10 +159,10 @@ public class WirePusherClient : IWirePusherClient
                 payload["tags"] = normalizedTags;
 
             if (notification.ImageUrl != null)
-                payload["image_url"] = notification.ImageUrl;
+                payload["imageURL"] = notification.ImageUrl;
 
             if (notification.ActionUrl != null)
-                payload["action_url"] = notification.ActionUrl;
+                payload["actionURL"] = notification.ActionUrl;
 
             if (ivHex != null)
                 payload["iv"] = ivHex;
@@ -211,12 +180,12 @@ public class WirePusherClient : IWirePusherClient
 
     /// <inheritdoc/>
     public async Task<NotificationResponse> NotifAIAsync(
-        string input,
+        string text,
         CancellationToken cancellationToken = default)
     {
         var request = new NotifAIRequest
         {
-            Input = input
+            Text = text
         };
 
         return await NotifAIAsync(request, cancellationToken);
@@ -232,14 +201,14 @@ public class WirePusherClient : IWirePusherClient
         return await ExecuteWithRetryAsync(async () =>
         {
             // Handle encryption if password provided
-            var finalInput = request.Input;
+            var finalText = request.Text;
             string? ivHex = null;
 
             if (!string.IsNullOrWhiteSpace(request.EncryptionPassword))
             {
                 var ivResult = EncryptionUtil.GenerateIV();
-                finalInput = EncryptionUtil.EncryptMessage(
-                    request.Input,
+                finalText = EncryptionUtil.EncryptMessage(
+                    request.Text,
                     request.EncryptionPassword,
                     ivResult.IVBytes
                 );
@@ -249,15 +218,8 @@ public class WirePusherClient : IWirePusherClient
             // Build request payload
             var payload = new Dictionary<string, object?>
             {
-                ["input"] = finalInput
+                ["text"] = finalText
             };
-
-            // Add authentication (token XOR deviceId)
-            if (_token != null)
-                payload["token"] = _token;
-
-            if (_deviceId != null)
-                payload["id"] = _deviceId;
 
             if (request.Type != null)
                 payload["type"] = request.Type;
@@ -444,7 +406,7 @@ public class WirePusherClient : IWirePusherClient
         await Task.Delay(delay, cancellationToken);
     }
 
-    private static HttpClient CreateDefaultHttpClient(TimeSpan? timeout = null)
+    private static HttpClient CreateDefaultHttpClient(string token, TimeSpan? timeout = null)
     {
         var client = new HttpClient
         {
@@ -454,6 +416,7 @@ public class WirePusherClient : IWirePusherClient
 
         client.DefaultRequestHeaders.Add("Accept", "application/json");
         client.DefaultRequestHeaders.Add("User-Agent", UserAgent);
+        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
 
         return client;
     }

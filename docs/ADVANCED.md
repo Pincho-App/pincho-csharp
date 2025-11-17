@@ -19,20 +19,19 @@ Main client class implementing `IWirePusherClient`.
 
 ```csharp
 // Constructor variants
-public WirePusherClient(string? token, string? deviceId)
-public WirePusherClient(string? token, string? deviceId, TimeSpan timeout)
-public WirePusherClient(string? token, string? deviceId, HttpClient httpClient)
-public WirePusherClient(string? token, string? deviceId, HttpClient httpClient, int maxRetries)
+public WirePusherClient(string token)
+public WirePusherClient(string token, TimeSpan timeout)
+public WirePusherClient(string token, HttpClient httpClient)
+public WirePusherClient(string token, HttpClient httpClient, int maxRetries)
 ```
 
 **Parameters:**
-- `token` - WirePusher API token (preferred authentication method)
-- `deviceId` - Device ID (DEPRECATED: legacy authentication)
+- `token` - WirePusher API token (required)
 - `timeout` - Request timeout (default: 30 seconds)
 - `httpClient` - Custom HttpClient instance (for testing or advanced scenarios)
 - `maxRetries` - Maximum retry attempts (default: 3)
 
-**Note:** Token and deviceId are mutually exclusive. Provide one or the other, not both.
+**Authentication:** Token is passed via Bearer token in the Authorization header.
 
 ### Methods
 
@@ -99,7 +98,7 @@ Request model for AI-powered notifications.
 ```csharp
 public record NotifAIRequest
 {
-    public required string Input { get; init; }       // Required - natural language input
+    public required string Text { get; init; }        // Required - natural language input
     public string? Type { get; init; }                // Optional - override AI-selected type
     public string? EncryptionPassword { get; init; }  // Optional
 }
@@ -142,7 +141,7 @@ builder.Services.AddSingleton<IWirePusherClient>(sp =>
 {
     var token = builder.Configuration["WirePusher:Token"]
         ?? throw new InvalidOperationException("WirePusher token not configured");
-    return new WirePusherClient(token, null);
+    return new WirePusherClient(token);
 });
 ```
 
@@ -236,7 +235,7 @@ public class AlertMonitorService : BackgroundService
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<IWirePusherClient>(
-    _ => new WirePusherClient(builder.Configuration["WirePusher:Token"]!, null));
+    _ => new WirePusherClient(builder.Configuration["WirePusher:Token"]!));
 
 var app = builder.Build();
 
@@ -345,14 +344,15 @@ The client automatically retries failed requests with exponential backoff.
 
 ```csharp
 // Default: 3 retries
-var client = new WirePusherClient("token", null);
+var client = new WirePusherClient("token");
 
 // Custom: 5 retries
-var httpClient = new HttpClient { /* ... */ };
-var client = new WirePusherClient("token", null, httpClient, maxRetries: 5);
+var httpClient = new HttpClient { BaseAddress = new Uri("https://api.wirepusher.dev/") };
+httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer token");
+var client = new WirePusherClient("token", httpClient, maxRetries: 5);
 
 // Disable retries
-var client = new WirePusherClient("token", null, httpClient, maxRetries: 0);
+var client = new WirePusherClient("token", httpClient, maxRetries: 0);
 ```
 
 ### Retry Behavior
@@ -492,7 +492,7 @@ public class AINotifier
         // AI generates content, but uses specified type
         var request = new NotifAIRequest
         {
-            Input = eventDescription,
+            Text = eventDescription,
             Type = type  // Force specific type
         };
 

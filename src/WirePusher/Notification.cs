@@ -36,14 +36,14 @@ public record Notification
     /// <summary>
     /// Gets or initializes the URL to an image to display (optional).
     /// </summary>
-    [JsonPropertyName("image_url")]
+    [JsonPropertyName("imageURL")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ImageUrl { get; init; }
 
     /// <summary>
     /// Gets or initializes the URL to open when notification is tapped (optional).
     /// </summary>
-    [JsonPropertyName("action_url")]
+    [JsonPropertyName("actionURL")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ActionUrl { get; init; }
 

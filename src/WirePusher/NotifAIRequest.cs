@@ -12,13 +12,13 @@ namespace WirePusher;
 public record NotifAIRequest
 {
     /// <summary>
-    /// Gets or initializes the free-form input text to convert to a notification (required).
+    /// Gets or initializes the free-form text to convert to a notification (required).
     /// </summary>
     /// <remarks>
     /// Examples: "deployment finished, v2.1.3 is live", "server CPU at 95%", "backup completed successfully"
     /// </remarks>
-    [JsonPropertyName("input")]
-    public string Input { get; init; } = string.Empty;
+    [JsonPropertyName("text")]
+    public string Text { get; init; } = string.Empty;
 
     /// <summary>
     /// Gets or initializes the notification type for categorization (optional).

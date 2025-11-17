@@ -16,7 +16,7 @@ dotnet add package WirePusher
 ```csharp
 using WirePusher;
 
-var client = new WirePusherClient("YOUR_TOKEN", null);
+var client = new WirePusherClient("YOUR_TOKEN");
 await client.SendAsync("Deploy Complete", "Version 1.2.3 deployed");
 
 // With full options
@@ -64,14 +64,15 @@ await client.SendNotificationAsync(encrypted);
 
 ```csharp
 // Default configuration
-var client = new WirePusherClient("abc12345", null);
+var client = new WirePusherClient("abc12345");
 
 // Custom timeout
-var client = new WirePusherClient("abc12345", null, TimeSpan.FromSeconds(60));
+var client = new WirePusherClient("abc12345", TimeSpan.FromSeconds(60));
 
 // Custom retry attempts
-var httpClient = new HttpClient { BaseAddress = new Uri("https://...") };
-var client = new WirePusherClient("abc12345", null, httpClient, maxRetries: 5);
+var httpClient = new HttpClient { BaseAddress = new Uri("https://api.wirepusher.dev/") };
+httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer abc12345");
+var client = new WirePusherClient("abc12345", httpClient, 5);
 ```
 
 ## Error Handling
@@ -117,7 +118,7 @@ Automatic retry with exponential backoff for network errors, 5xx, and 429 (rate 
 ```csharp
 // Program.cs
 builder.Services.AddSingleton<IWirePusherClient>(sp =>
-    new WirePusherClient(builder.Configuration["WirePusher:Token"]!, null));
+    new WirePusherClient(builder.Configuration["WirePusher:Token"]!));
 
 // Service
 public class NotificationService(IWirePusherClient client)
