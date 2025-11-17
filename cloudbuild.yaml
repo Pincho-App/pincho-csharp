@@ -146,5 +146,3 @@ artifacts:
     location: 'gs://${PROJECT_ID}_cloudbuild/artifacts/csharp-sdk/${BUILD_ID}'
     paths:
       - 'artifacts/*.nupkg'
-      - 'coveragereport/*'
-      - 'TestResults/**/coverage.cobertura.xml'
