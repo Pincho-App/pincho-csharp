@@ -43,7 +43,7 @@ steps:
       - '-c'
       - |
         dotnet tool install --global dotnet-reportgenerator-globaltool || true
-        export PATH="$PATH:/root/.dotnet/tools"
+        export PATH="$$PATH:/root/.dotnet/tools"
 
         reportgenerator \
           -reports:"./TestResults/**/coverage.cobertura.xml" \
@@ -51,12 +51,12 @@ steps:
           -reporttypes:"Html;TextSummary"
 
         # Extract line coverage percentage
-        COVERAGE=$(grep -oP 'Line coverage: \K[0-9.]+' ./coveragereport/Summary.txt || echo "0")
-        echo "Line coverage: $COVERAGE%"
+        COVERAGE=$$(grep -oP 'Line coverage: \K[0-9.]+' ./coveragereport/Summary.txt || echo "0")
+        echo "Line coverage: $$COVERAGE%"
 
         # Check if coverage meets threshold
-        if (( $(echo "$COVERAGE < 90.0" | bc -l) )); then
-          echo "ERROR: Coverage $COVERAGE% is below 90% threshold"
+        if (( $$(echo "$$COVERAGE < 90.0" | bc -l) )); then
+          echo "ERROR: Coverage $$COVERAGE% is below 90% threshold"
           exit 1
         fi
 
