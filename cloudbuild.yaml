@@ -143,7 +143,7 @@ options:
 # Artifacts to save
 artifacts:
   objects:
-    location: 'gs://wirepusher-build-artifacts/wirepusher-csharp/$BUILD_ID'
+    location: 'gs://${PROJECT_ID}_cloudbuild/artifacts/csharp-sdk/${BUILD_ID}'
     paths:
       - 'artifacts/*.nupkg'
       - 'coveragereport/*'
