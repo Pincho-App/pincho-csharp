@@ -37,12 +37,15 @@ public class WirePusherClient : IWirePusherClient
     private const int DefaultMaxRetries = 3;
     private static readonly TimeSpan InitialRetryDelay = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromSeconds(30);
+    private const string SdkVersion = "1.0.0";
+    private const string UserAgent = $"WirePusher-CSharp/{SdkVersion}";
 
     private readonly HttpClient _httpClient;
     private readonly string? _token;
     private readonly string? _deviceId;
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly int _maxRetries;
+    private TimeSpan? _lastRetryAfter;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WirePusherClient"/> class.
@@ -280,6 +283,30 @@ public class WirePusherClient : IWirePusherClient
         var statusCode = (int)response.StatusCode;
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
+        // Parse Retry-After header if present (for rate limiting)
+        _lastRetryAfter = null;
+        if (response.Headers.TryGetValues("Retry-After", out var retryAfterValues))
+        {
+            var retryAfterValue = retryAfterValues.FirstOrDefault();
+            if (!string.IsNullOrEmpty(retryAfterValue))
+            {
+                // Try to parse as seconds (e.g., "120")
+                if (int.TryParse(retryAfterValue, out var seconds))
+                {
+                    _lastRetryAfter = TimeSpan.FromSeconds(seconds);
+                }
+                // Try to parse as HTTP-date (e.g., "Wed, 21 Oct 2015 07:28:00 GMT")
+                else if (DateTimeOffset.TryParse(retryAfterValue, out var retryDate))
+                {
+                    var delay = retryDate - DateTimeOffset.UtcNow;
+                    if (delay > TimeSpan.Zero)
+                    {
+                        _lastRetryAfter = delay;
+                    }
+                }
+            }
+        }
+
         if (response.IsSuccessStatusCode)
         {
             try
@@ -375,7 +402,7 @@ public class WirePusherClient : IWirePusherClient
                 // Retry for retryable exceptions
                 attempt++;
                 var isRateLimit = ex is RateLimitException;
-                await DelayWithBackoffAsync(attempt, isRateLimit, cancellationToken);
+                await DelayWithBackoffAsync(attempt, isRateLimit, _lastRetryAfter, cancellationToken);
             }
             catch (WirePusherException)
             {
@@ -387,14 +414,32 @@ public class WirePusherClient : IWirePusherClient
 
     private static async Task DelayWithBackoffAsync(int attempt, bool isRateLimit, CancellationToken cancellationToken)
     {
-        // Calculate exponential backoff: 1s, 2s, 4s, 8s, etc., capped at 30s
-        var delaySeconds = Math.Pow(2, attempt - 1);
+        await DelayWithBackoffAsync(attempt, isRateLimit, null, cancellationToken);
+    }
 
-        // For rate limits, start with a longer initial delay (5s)
-        if (isRateLimit && attempt == 1)
-            delaySeconds = 5;
+    private static async Task DelayWithBackoffAsync(int attempt, bool isRateLimit, TimeSpan? retryAfter, CancellationToken cancellationToken)
+    {
+        TimeSpan delay;
 
-        var delay = TimeSpan.FromSeconds(Math.Min(delaySeconds, MaxRetryDelay.TotalSeconds));
+        // Use Retry-After header if available (for rate limits)
+        if (isRateLimit && retryAfter.HasValue && retryAfter.Value > TimeSpan.Zero)
+        {
+            delay = retryAfter.Value;
+            // Cap at MaxRetryDelay to prevent extremely long waits
+            if (delay > MaxRetryDelay)
+                delay = MaxRetryDelay;
+        }
+        else
+        {
+            // Calculate exponential backoff: 1s, 2s, 4s, 8s, etc., capped at 30s
+            var delaySeconds = Math.Pow(2, attempt - 1);
+
+            // For rate limits, start with a longer initial delay (5s)
+            if (isRateLimit && attempt == 1)
+                delaySeconds = 5;
+
+            delay = TimeSpan.FromSeconds(Math.Min(delaySeconds, MaxRetryDelay.TotalSeconds));
+        }
 
         await Task.Delay(delay, cancellationToken);
     }
@@ -408,6 +453,7 @@ public class WirePusherClient : IWirePusherClient
         };
 
         client.DefaultRequestHeaders.Add("Accept", "application/json");
+        client.DefaultRequestHeaders.Add("User-Agent", UserAgent);
 
         return client;
     }

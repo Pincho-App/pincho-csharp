@@ -3,14 +3,14 @@
 
 steps:
   # Step 1: Restore dependencies
-  - name: 'mcr.microsoft.com/dotnet/sdk:6.0'
+  - name: 'mcr.microsoft.com/dotnet/sdk:8.0'
     id: 'restore'
     entrypoint: 'dotnet'
     args:
       - 'restore'
 
   # Step 2: Build solution
-  - name: 'mcr.microsoft.com/dotnet/sdk:6.0'
+  - name: 'mcr.microsoft.com/dotnet/sdk:8.0'
     id: 'build'
     entrypoint: 'dotnet'
     waitFor: ['restore']
@@ -21,7 +21,7 @@ steps:
       - '--no-restore'
 
   # Step 3: Run tests with coverage
-  - name: 'mcr.microsoft.com/dotnet/sdk:6.0'
+  - name: 'mcr.microsoft.com/dotnet/sdk:8.0'
     id: 'test'
     entrypoint: 'dotnet'
     waitFor: ['build']
@@ -35,7 +35,7 @@ steps:
       - './TestResults'
 
   # Step 4: Check coverage threshold (90%)
-  - name: 'mcr.microsoft.com/dotnet/sdk:6.0'
+  - name: 'mcr.microsoft.com/dotnet/sdk:8.0'
     id: 'coverage-check'
     entrypoint: 'bash'
     waitFor: ['test']
@@ -63,7 +63,7 @@ steps:
         echo "Coverage threshold met (>= 90%)"
 
   # Step 5: Pack NuGet package
-  - name: 'mcr.microsoft.com/dotnet/sdk:6.0'
+  - name: 'mcr.microsoft.com/dotnet/sdk:8.0'
     id: 'pack'
     entrypoint: 'dotnet'
     waitFor: ['coverage-check']
@@ -77,26 +77,25 @@ steps:
       - './artifacts'
 
   # Step 6: Publish to NuGet (ONLY on Git tags)
-  # NuGet publishing requires API key
-  # This step validates the package is ready for publication
-  - name: 'mcr.microsoft.com/dotnet/sdk:6.0'
+  - name: 'mcr.microsoft.com/dotnet/sdk:8.0'
     id: 'publish'
     entrypoint: 'bash'
     waitFor: ['pack']
+    secretEnv: ['NUGET_API_KEY']
     args:
       - '-c'
       - |
         if [ -n "$TAG_NAME" ]; then
           echo "Publishing version $TAG_NAME to NuGet..."
-          echo ""
-          echo "NuGet publication requires:"
-          echo "1. Create account at https://www.nuget.org/"
-          echo "2. Generate API key"
-          echo "3. Add API key to Secret Manager (nuget-api-key)"
-          echo "4. Run: dotnet nuget push artifacts/*.nupkg --api-key \$NUGET_API_KEY --source https://api.nuget.org/v3/index.json"
-          echo ""
-          echo "Tag $TAG_NAME is valid and package is ready!"
           ls -lh ./artifacts/*.nupkg
+
+          dotnet nuget push ./artifacts/*.nupkg \
+            --api-key "$$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+          echo ""
+          echo "✓ Published $TAG_NAME to NuGet"
         else
           echo "Skipping NuGet publish (not a tagged release)"
           echo "To publish: git tag v1.0.0 && git push origin v1.0.0"
@@ -131,6 +130,8 @@ steps:
 # Secret Manager integration
 availableSecrets:
   secretManager:
+    - versionName: projects/$PROJECT_ID/secrets/nuget-api-key/versions/latest
+      env: 'NUGET_API_KEY'
     - versionName: projects/$PROJECT_ID/secrets/wirepusher-token/versions/latest
       env: 'WIREPUSHER_TOKEN'
 

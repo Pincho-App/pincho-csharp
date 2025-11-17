@@ -1,37 +1,14 @@
-# WirePusher C# Client Library
+# WirePusher C# Library
+
+Official .NET client for [WirePusher](https://wirepusher.dev) push notifications.
 
 [![NuGet](https://img.shields.io/nuget/v/WirePusher.svg)](https://www.nuget.org/packages/WirePusher/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-
-Official C# Client Library for [WirePusher](https://wirepusher.dev) push notifications.
-
-## Features
-
-- Zero external dependencies - Uses .NET 6+ built-in libraries
-- Full async/await support with CancellationToken
-- Type safety with nullable reference types
-- Interface-based design for dependency injection
-- Complete IntelliSense XML documentation
-- 90%+ test coverage
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## Installation
 
-### NuGet Package Manager
-
-```powershell
-Install-Package WirePusher
-```
-
-### .NET CLI
-
 ```bash
 dotnet add package WirePusher
-```
-
-### PackageReference
-
-```xml
-<PackageReference Include="WirePusher" Version="1.0.0" />
 ```
 
 ## Quick Start
@@ -39,447 +16,132 @@ dotnet add package WirePusher
 ```csharp
 using WirePusher;
 
-var client = new WirePusherClient(
-    Environment.GetEnvironmentVariable("WIREPUSHER_TOKEN")!, null);
+var client = new WirePusherClient("YOUR_TOKEN", null);
+await client.SendAsync("Deploy Complete", "Version 1.2.3 deployed");
 
-await client.SendAsync(
-    "Deploy Complete",
-    "Version 1.2.3 deployed to production");
-```
-
-**Get your token:** Open app → Settings → Help → copy token
-
-## Usage
-
-### Basic Example
-
-```csharp
-using WirePusher;
-
-var client = new WirePusherClient("abc12345", null);
-
-var response = await client.SendAsync(
-    "Deploy Complete",
-    "Version 1.2.3 deployed to production");
-
-Console.WriteLine(response.Status);  // "success"
-```
-
-### All Parameters
-
-```csharp
-using WirePusher;
-
-var client = new WirePusherClient("abc12345", null);
-
+// With full options
 var notification = new Notification
 {
     Title = "Deploy Complete",
-    Message = "Version 1.2.3 deployed to production",
+    Message = "Version 1.2.3 deployed",
     Type = "deployment",
-    Tags = new[] { "production", "backend" },
-    ImageUrl = "https://cdn.example.com/success.png",
-    ActionUrl = "https://dash.example.com/deploy/123"
+    Tags = new[] { "production", "backend" }
 };
-
-var response = await client.SendNotificationAsync(notification);
+await client.SendNotificationAsync(notification);
 ```
 
-### ASP.NET Core Integration
-
-**Configuration (appsettings.json):**
-
-```json
-{
-  "WirePusher": {
-    "Token": "abc12345"
-  }
-}
-```
-
-**Service Registration (Program.cs):**
+## Features
 
 ```csharp
-using WirePusher;
-
-var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddSingleton<IWirePusherClient>(sp =>
-{
-    var config = sp.GetRequiredService<IConfiguration>();
-    return new WirePusherClient(config["WirePusher:Token"]!, null);
-});
-
-var app = builder.Build();
-```
-
-**Usage in Services:**
-
-```csharp
-using WirePusher;
-
-public class NotificationService
-{
-    private readonly IWirePusherClient _wirePusherClient;
-
-    public NotificationService(IWirePusherClient wirePusherClient)
-    {
-        _wirePusherClient = wirePusherClient;
-    }
-
-    public async Task NotifyDeploymentAsync(string version)
-    {
-        var notification = new Notification
-        {
-            Title = "Deploy Complete",
-            Message = $"Version {version} deployed to production",
-            Type = "deployment",
-            Tags = new[] { "production", "backend" }
-        };
-
-        await _wirePusherClient.SendNotificationAsync(notification);
-    }
-}
-```
-
-## Encryption
-
-Encrypt notification messages using AES-128-CBC. Only the `Message` field is encrypted—`Title`, `Type`, `Tags`, `ImageUrl`, and `ActionUrl` remain unencrypted for filtering and display.
-
-**Setup:**
-1. In the app, create a notification type
-2. Set an encryption password for that type
-3. Pass the same `Type` and password when sending
-
-```csharp
-using WirePusher;
-
-var client = new WirePusherClient(
-    Environment.GetEnvironmentVariable("WIREPUSHER_TOKEN")!, null);
-
+// All parameters
 var notification = new Notification
 {
-    Title = "Security Alert",
-    Message = "Unauthorized access attempt detected",
-    Type = "security",
-    EncryptionPassword = Environment.GetEnvironmentVariable("ENCRYPTION_PASSWORD")
+    Title = "Deploy Complete",
+    Message = "Version 1.2.3 deployed",
+    Type = "deployment",
+    Tags = new[] { "production", "backend" },
+    ImageUrl = "https://example.com/success.png",
+    ActionUrl = "https://example.com/deploy/123"
 };
+await client.SendNotificationAsync(notification);
 
-var response = await client.SendNotificationAsync(notification);
+// AI-powered notifications (NotifAI)
+var response = await client.NotifAIAsync("deployment finished, v2.1.3 is live");
+// response contains AI-generated notification structure
+
+// Encrypted messages
+var encrypted = new Notification
+{
+    Title = "Security Alert",
+    Message = "Sensitive data",
+    Type = "security",
+    EncryptionPassword = "your_password"
+};
+await client.SendNotificationAsync(encrypted);
 ```
 
-**Security notes:**
-- Use strong passwords (minimum 12 characters)
-- Store passwords securely (environment variables, secret managers)
-- Password must match the type configuration in the app
-
-## API Reference
-
-### WirePusherClient
-
-**Constructors:**
+## Configuration
 
 ```csharp
-// Default settings (recommended)
-WirePusherClient(string token)
+// Default configuration
+var client = new WirePusherClient("abc12345", null);
 
 // Custom timeout
-WirePusherClient(string token, TimeSpan timeout)
+var client = new WirePusherClient("abc12345", null, TimeSpan.FromSeconds(60));
 
-// Custom HttpClient (for testing)
-WirePusherClient(string token, HttpClient httpClient)
+// Custom retry attempts
+var httpClient = new HttpClient { BaseAddress = new Uri("https://...") };
+var client = new WirePusherClient("abc12345", null, httpClient, maxRetries: 5);
 ```
-
-**Parameters:**
-- `token` (required): Your WirePusher token
-- `timeout` (optional): Request timeout (default: 30 seconds)
-- `httpClient` (optional): Custom HTTP client
-
-### Methods
-
-```csharp
-// Simple send
-Task<NotificationResponse> SendAsync(
-    string title,
-    string message,
-    CancellationToken cancellationToken = default)
-
-// Advanced send with all parameters
-Task<NotificationResponse> SendNotificationAsync(
-    Notification notification,
-    CancellationToken cancellationToken = default)
-```
-
-### Notification
-
-**Properties:**
-- `Title` (string, required): Notification title
-- `Message` (string, required): Notification message
-- `Type` (string, optional): Category for organization
-- `Tags` (string[], optional): Tags for filtering
-- `ImageUrl` (string, optional): Image URL to display
-- `ActionUrl` (string, optional): URL to open when tapped
-- `EncryptionPassword` (string, optional): Password for encryption
-
-### NotificationResponse
-
-**Properties:**
-- `Status` (string): Response status (e.g., "success")
-- `Message` (string): Response message
-- `IsSuccess` (bool): Returns true if status is "success"
-
-### Exceptions
-
-- `WirePusherException`: Base exception for all SDK errors
-- `AuthenticationException`: Invalid token (401, 403)
-- `ValidationException`: Invalid parameters (400, 404)
-- `RateLimitException`: Rate limit exceeded (429)
-
-All exceptions include:
-- `Message`: Error description
-- `StatusCode`: HTTP status code
-- `InnerException`: Original cause if available
 
 ## Error Handling
 
+Use typed exceptions for error handling:
+
 ```csharp
-using WirePusher;
-using WirePusher.Exceptions;
-
-var client = new WirePusherClient(
-    Environment.GetEnvironmentVariable("WIREPUSHER_TOKEN")!, null);
-
 try
 {
-    await client.SendAsync("Deploy Complete", "Version 1.2.3 deployed");
+    await client.SendAsync("Title", "Message");
 }
 catch (AuthenticationException ex)
 {
-    Console.WriteLine($"Authentication failed: {ex.Message}");
+    // Invalid token (401/403) - not retried
+    Console.WriteLine($"Auth failed: {ex.Message}");
+}
+catch (RateLimitException ex)
+{
+    // Rate limited (429) - automatically retried with backoff
+    Console.WriteLine($"Rate limited: {ex.Message}");
 }
 catch (ValidationException ex)
 {
-    Console.WriteLine($"Invalid parameters: {ex.Message}");
+    // Invalid parameters (400) - not retried
+    Console.WriteLine($"Validation error: {ex.Message}");
 }
-catch (WirePusherException ex)
+catch (ServerException ex)
 {
-    Console.WriteLine($"API error: {ex.Message}");
+    // Server error (5xx) - automatically retried
+    Console.WriteLine($"Server error: {ex.Message}");
+}
+catch (NetworkException ex)
+{
+    // Network/timeout error - automatically retried
+    Console.WriteLine($"Network error: {ex.Message}");
 }
 ```
 
-## Examples
+Automatic retry with exponential backoff for network errors, 5xx, and 429 (rate limit). Respects `Retry-After` headers.
 
-### CI/CD Pipeline
-
-```csharp
-using WirePusher;
-
-public class DeploymentNotifier
-{
-    private readonly IWirePusherClient _client;
-
-    public DeploymentNotifier()
-    {
-        var token = Environment.GetEnvironmentVariable("WIREPUSHER_TOKEN")!;
-        _client = new WirePusherClient(token, null);
-    }
-
-    public async Task NotifyDeploymentAsync(string version, string environment)
-    {
-        var notification = new Notification
-        {
-            Title = "Deploy Complete",
-            Message = $"Version {version} deployed to {environment}",
-            Type = "deployment",
-            Tags = new[] { environment, version }
-        };
-
-        await _client.SendNotificationAsync(notification);
-    }
-}
-
-// In your deployment script
-var notifier = new DeploymentNotifier();
-await notifier.NotifyDeploymentAsync("1.2.3", "production");
-```
-
-### Server Monitoring
+## ASP.NET Core Integration
 
 ```csharp
-using WirePusher;
-using System.Diagnostics;
-
-public class ServerMonitor
-{
-    private readonly IWirePusherClient _client;
-
-    public ServerMonitor(IWirePusherClient client)
-    {
-        _client = client;
-    }
-
-    public async Task CheckServerHealthAsync()
-    {
-        var cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
-        var cpu = cpuCounter.NextValue();
-
-        if (cpu > 80)
-        {
-            await _client.SendAsync(
-                "Server Alert",
-                $"CPU usage is at {cpu:F1}%",
-                new CancellationToken());
-        }
-    }
-}
-```
-
-### Minimal API Example
-
-```csharp
-using WirePusher;
-
-var builder = WebApplication.CreateBuilder(args);
-
+// Program.cs
 builder.Services.AddSingleton<IWirePusherClient>(sp =>
+    new WirePusherClient(builder.Configuration["WirePusher:Token"]!, null));
+
+// Service
+public class NotificationService(IWirePusherClient client)
 {
-    var config = sp.GetRequiredService<IConfiguration>();
-    return new WirePusherClient(config["WirePusher:Token"]!, null);
-});
-
-var app = builder.Build();
-
-app.MapPost("/deploy", async (
-    string version,
-    IWirePusherClient client) =>
-{
-    try
-    {
-        var notification = new Notification
-        {
-            Title = "Deploy Complete",
-            Message = $"Version {version} deployed to production",
-            Type = "deployment",
-            Tags = new[] { "production", "backend" }
-        };
-
-        var response = await client.SendNotificationAsync(notification);
-        return Results.Ok(response);
-    }
-    catch (WirePusherException ex)
-    {
-        return Results.Problem(ex.Message, statusCode: ex.StatusCode);
-    }
-});
-
-app.Run();
-```
-
-### Background Service
-
-```csharp
-using WirePusher;
-using Microsoft.Extensions.Hosting;
-
-public class NotificationBackgroundService : BackgroundService
-{
-    private readonly IWirePusherClient _client;
-    private readonly ILogger<NotificationBackgroundService> _logger;
-
-    public NotificationBackgroundService(
-        IWirePusherClient client,
-        ILogger<NotificationBackgroundService> logger)
-    {
-        _client = client;
-        _logger = logger;
-    }
-
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            try
-            {
-                // Your monitoring logic here
-                await _client.SendAsync(
-                    "Deploy Complete",
-                    "Version 1.2.3 deployed to production",
-                    stoppingToken);
-            }
-            catch (WirePusherException ex)
-            {
-                _logger.LogError(ex, "Failed to send notification");
-            }
-
-            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
-        }
-    }
+    public async Task NotifyAsync(string message) =>
+        await client.SendAsync("Alert", message);
 }
-```
-
-## Development
-
-### Setup
-
-```bash
-# Clone repository
-git clone https://gitlab.com/wirepusher/wirepusher-csharp.git
-cd wirepusher-csharp
-
-# Restore dependencies
-dotnet restore
-```
-
-### Building
-
-```bash
-dotnet build
-```
-
-### Testing
-
-```bash
-# Run all tests
-dotnet test
-
-# Run tests with coverage
-dotnet test --collect:"XPlat Code Coverage"
-
-# View coverage report (requires reportgenerator)
-dotnet tool install -g dotnet-reportgenerator-globaltool
-reportgenerator -reports:"**/coverage.cobertura.xml" -targetdir:"coveragereport"
-```
-
-### Project Structure
-
-```
-wirepusher-csharp/
-├── src/WirePusher/
-│   ├── WirePusher.csproj
-│   ├── WirePusherClient.cs
-│   ├── IWirePusherClient.cs
-│   ├── Notification.cs
-│   ├── NotificationResponse.cs
-│   └── Exceptions/
-├── tests/WirePusher.Tests/
-│   ├── WirePusher.Tests.csproj
-│   ├── WirePusherClientTests.cs
-│   ├── NotificationTests.cs
-│   └── ExceptionTests.cs
-└── README.md
 ```
 
 ## Requirements
 
-- .NET 6.0 or higher
+- .NET 6.0+
+- Zero external dependencies (System.Net.Http, System.Text.Json)
+- Full async/await with CancellationToken support
+- Nullable reference types enabled
 
 ## Links
 
+- **Get Token**: App → Settings → Help → copy token
 - **Documentation**: https://wirepusher.dev/help
 - **Repository**: https://gitlab.com/wirepusher/wirepusher-csharp
-- **Issues**: https://gitlab.com/wirepusher/wirepusher-csharp/-/issues
 - **NuGet**: https://www.nuget.org/packages/WirePusher/
+- **Advanced Docs**: [docs/ADVANCED.md](docs/ADVANCED.md)
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+MIT
