@@ -5,11 +5,11 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{384ADDC4-2AB8-4401-8B90-E13F5C6CEFA1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WirePusher", "src\WirePusher\WirePusher.csproj", "{B6F8509A-EC76-42CD-AC30-ACB49B3528C8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pincho", "src\Pincho\Pincho.csproj", "{B6F8509A-EC76-42CD-AC30-ACB49B3528C8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{7378C228-44AE-4F71-85C5-AFAE28B8CF8A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WirePusher.Tests", "tests\WirePusher.Tests\WirePusher.Tests.csproj", "{E3EA5975-EC74-4B00-B109-E414A2EE6317}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pincho.Tests", "tests\Pincho.Tests\Pincho.Tests.csproj", "{E3EA5975-EC74-4B00-B109-E414A2EE6317}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
