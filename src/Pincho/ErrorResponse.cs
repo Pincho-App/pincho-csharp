@@ -1,9 +1,9 @@
 using System.Text.Json.Serialization;
 
-namespace WirePusher;
+namespace Pincho;
 
 /// <summary>
-/// Represents an error response from the WirePusher API.
+/// Represents an error response from the Pincho API.
 /// </summary>
 /// <remarks>
 /// The API returns errors in a nested format with detailed error information.
@@ -24,7 +24,7 @@ internal record ErrorResponse
 }
 
 /// <summary>
-/// Represents detailed error information from the WirePusher API.
+/// Represents detailed error information from the Pincho API.
 /// </summary>
 internal record ErrorDetail
 {

@@ -1,22 +1,22 @@
-# WirePusher C# Library
+# Pincho C# Library
 
-Official .NET client for [WirePusher](https://wirepusher.dev) push notifications.
+Official .NET client for [Pincho](https://pincho.app) push notifications.
 
-[![NuGet](https://img.shields.io/nuget/v/WirePusher.svg)](https://www.nuget.org/packages/WirePusher/)
+[![NuGet](https://img.shields.io/nuget/v/Pincho.svg)](https://www.nuget.org/packages/Pincho/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## Installation
 
 ```bash
-dotnet add package WirePusher
+dotnet add package Pincho
 ```
 
 ## Quick Start
 
 ```csharp
-using WirePusher;
+using Pincho;
 
-var client = new WirePusherClient("YOUR_TOKEN");
+var client = new PinchoClient("YOUR_TOKEN");
 await client.SendAsync("Deploy Complete", "Version 1.2.3 deployed");
 
 // With full options
@@ -64,15 +64,15 @@ await client.SendNotificationAsync(encrypted);
 
 ```csharp
 // Default configuration
-var client = new WirePusherClient("abc12345");
+var client = new PinchoClient("abc12345");
 
 // Custom timeout
-var client = new WirePusherClient("abc12345", TimeSpan.FromSeconds(60));
+var client = new PinchoClient("abc12345", TimeSpan.FromSeconds(60));
 
 // Custom retry attempts
-var httpClient = new HttpClient { BaseAddress = new Uri("https://api.wirepusher.dev/") };
+var httpClient = new HttpClient { BaseAddress = new Uri("https://api.pincho.app/") };
 httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer abc12345");
-var client = new WirePusherClient("abc12345", httpClient, 5);
+var client = new PinchoClient("abc12345", httpClient, 5);
 ```
 
 ## Error Handling
@@ -117,11 +117,11 @@ Automatic retry with exponential backoff for network errors, 5xx, and 429 (rate 
 
 ```csharp
 // Program.cs
-builder.Services.AddSingleton<IWirePusherClient>(sp =>
-    new WirePusherClient(builder.Configuration["WirePusher:Token"]!));
+builder.Services.AddSingleton<IPinchoClient>(sp =>
+    new PinchoClient(builder.Configuration["Pincho:Token"]!));
 
 // Service
-public class NotificationService(IWirePusherClient client)
+public class NotificationService(IPinchoClient client)
 {
     public async Task NotifyAsync(string message) =>
         await client.SendAsync("Alert", message);
@@ -138,9 +138,9 @@ public class NotificationService(IWirePusherClient client)
 ## Links
 
 - **Get Token**: App → Settings → Help → copy token
-- **Documentation**: https://wirepusher.dev/help
-- **Repository**: https://gitlab.com/wirepusher/wirepusher-csharp
-- **NuGet**: https://www.nuget.org/packages/WirePusher/
+- **Documentation**: https://pincho.app/help
+- **Repository**: https://gitlab.com/pincho-app/pincho-csharp
+- **NuGet**: https://www.nuget.org/packages/Pincho/
 - **Advanced Docs**: [docs/ADVANCED.md](docs/ADVANCED.md)
 
 ## License

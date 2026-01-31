@@ -1,7 +1,7 @@
-using WirePusher;
+using Pincho;
 
 var token = Environment.GetEnvironmentVariable("WIREPUSHER_TOKEN") ?? "your_token_here";
-var client = new WirePusherClient(token);
+var client = new PinchoClient(token);
 
 // IMPORTANT: Before using encryption:
 // 1. In WirePusher app, create/edit a notification type

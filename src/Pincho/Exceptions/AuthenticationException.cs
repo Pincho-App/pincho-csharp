@@ -1,9 +1,9 @@
-namespace WirePusher.Exceptions;
+namespace Pincho.Exceptions;
 
 /// <summary>
 /// Exception thrown when authentication fails (401/403 errors).
 /// </summary>
-public class AuthenticationException : WirePusherException
+public class AuthenticationException : PinchoException
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="AuthenticationException"/> class.

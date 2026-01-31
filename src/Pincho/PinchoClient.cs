@@ -1,13 +1,13 @@
 using System.Net.Http.Json;
 using System.Text.Json;
-using WirePusher.Crypto;
-using WirePusher.Exceptions;
-using WirePusher.Validation;
+using Pincho.Crypto;
+using Pincho.Exceptions;
+using Pincho.Validation;
 
-namespace WirePusher;
+namespace Pincho;
 
 /// <summary>
-/// WirePusher API client for sending push notifications.
+/// Pincho API client for sending push notifications.
 /// </summary>
 /// <remarks>
 /// This client uses .NET's built-in <see cref="HttpClient"/> for HTTP requests
@@ -16,7 +16,7 @@ namespace WirePusher;
 /// <example>
 /// <code>
 /// // Simple send
-/// var client = new WirePusherClient("abc12345", null);
+/// var client = new PinchoClient("abc12345", null);
 /// await client.SendAsync("Build Failed", "Pipeline #123 failed");
 ///
 /// // Advanced send
@@ -30,15 +30,15 @@ namespace WirePusher;
 /// await client.SendNotificationAsync(notification);
 /// </code>
 /// </example>
-public class WirePusherClient : IWirePusherClient
+public class PinchoClient : IPinchoClient
 {
-    private const string DefaultBaseUrl = "https://api.wirepusher.dev/";
+    private const string DefaultBaseUrl = "https://api.pincho.app/";
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
     private const int DefaultMaxRetries = 3;
     private static readonly TimeSpan InitialRetryDelay = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromSeconds(30);
-    private const string SdkVersion = "1.0.0";
-    private const string UserAgent = $"WirePusher-CSharp/{SdkVersion}";
+    private const string SdkVersion = "1.0.0-alpha.1";
+    private const string UserAgent = $"pincho-csharp/{SdkVersion}";
 
     private readonly HttpClient _httpClient;
     private readonly string _token;
@@ -47,47 +47,47 @@ public class WirePusherClient : IWirePusherClient
     private TimeSpan? _lastRetryAfter;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="WirePusherClient"/> class.
+    /// Initializes a new instance of the <see cref="PinchoClient"/> class.
     /// </summary>
-    /// <param name="token">The WirePusher API token.</param>
+    /// <param name="token">The Pincho API token.</param>
     /// <exception cref="ArgumentException">Thrown when token is null or empty.</exception>
-    public WirePusherClient(string token)
+    public PinchoClient(string token)
         : this(token, CreateDefaultHttpClient(token), DefaultMaxRetries)
     {
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="WirePusherClient"/> class.
+    /// Initializes a new instance of the <see cref="PinchoClient"/> class.
     /// </summary>
-    /// <param name="token">The WirePusher API token.</param>
+    /// <param name="token">The Pincho API token.</param>
     /// <param name="timeout">The request timeout.</param>
     /// <exception cref="ArgumentException">Thrown when token is null or empty.</exception>
-    public WirePusherClient(string token, TimeSpan timeout)
+    public PinchoClient(string token, TimeSpan timeout)
         : this(token, CreateDefaultHttpClient(token, timeout), DefaultMaxRetries)
     {
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="WirePusherClient"/> class.
+    /// Initializes a new instance of the <see cref="PinchoClient"/> class.
     /// </summary>
-    /// <param name="token">The WirePusher API token.</param>
+    /// <param name="token">The Pincho API token.</param>
     /// <param name="httpClient">A custom HTTP client (for testing or advanced scenarios).</param>
     /// <exception cref="ArgumentException">Thrown when token is null or empty.</exception>
     /// <exception cref="ArgumentNullException">Thrown when httpClient is null.</exception>
-    public WirePusherClient(string token, HttpClient httpClient)
+    public PinchoClient(string token, HttpClient httpClient)
         : this(token, httpClient, DefaultMaxRetries)
     {
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="WirePusherClient"/> class.
+    /// Initializes a new instance of the <see cref="PinchoClient"/> class.
     /// </summary>
-    /// <param name="token">The WirePusher API token.</param>
+    /// <param name="token">The Pincho API token.</param>
     /// <param name="httpClient">A custom HTTP client (for testing or advanced scenarios).</param>
     /// <param name="maxRetries">The maximum number of retry attempts (default: 3).</param>
     /// <exception cref="ArgumentException">Thrown when token is null or empty.</exception>
     /// <exception cref="ArgumentNullException">Thrown when httpClient is null.</exception>
-    public WirePusherClient(string token, HttpClient httpClient, int maxRetries)
+    public PinchoClient(string token, HttpClient httpClient, int maxRetries)
     {
         if (string.IsNullOrWhiteSpace(token))
             throw new ArgumentException("Token is required", nameof(token));
@@ -277,11 +277,11 @@ public class WirePusherClient : IWirePusherClient
                     _jsonOptions,
                     cancellationToken);
 
-                return result ?? throw new WirePusherException("Invalid response from API");
+                return result ?? throw new PinchoException("Invalid response from API");
             }
             catch (JsonException ex)
             {
-                throw new WirePusherException("Invalid response from API", ex);
+                throw new PinchoException("Invalid response from API", ex);
             }
         }
 
@@ -322,7 +322,7 @@ public class WirePusherClient : IWirePusherClient
             401 or 403 => new AuthenticationException(errorMessage, statusCode),
             429 => new RateLimitException(errorMessage, statusCode),
             >= 500 and < 600 => new ServerException(errorMessage, statusCode),
-            _ => new WirePusherException(errorMessage, statusCode)
+            _ => new PinchoException(errorMessage, statusCode)
         };
     }
 
@@ -348,7 +348,7 @@ public class WirePusherClient : IWirePusherClient
             }
             catch (TaskCanceledException ex) when (ex.CancellationToken == cancellationToken)
             {
-                throw new WirePusherException("Request was cancelled", ex);
+                throw new PinchoException("Request was cancelled", ex);
             }
             catch (TaskCanceledException ex)
             {
@@ -359,14 +359,14 @@ public class WirePusherClient : IWirePusherClient
                 attempt++;
                 await DelayWithBackoffAsync(attempt, isRateLimit: false, cancellationToken);
             }
-            catch (WirePusherException ex) when (ex.IsRetryable && attempt < _maxRetries)
+            catch (PinchoException ex) when (ex.IsRetryable && attempt < _maxRetries)
             {
                 // Retry for retryable exceptions
                 attempt++;
                 var isRateLimit = ex is RateLimitException;
                 await DelayWithBackoffAsync(attempt, isRateLimit, _lastRetryAfter, cancellationToken);
             }
-            catch (WirePusherException)
+            catch (PinchoException)
             {
                 // Non-retryable or max retries exceeded
                 throw;

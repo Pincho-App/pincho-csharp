@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace WirePusher.Validation;
+namespace Pincho.Validation;
 
 /// <summary>
 /// Provides tag normalization and validation utilities.
@@ -46,7 +46,7 @@ public static class TagNormalizer
     }
 
     /// <summary>
-    /// Validates whether a tag is valid according to WirePusher rules.
+    /// Validates whether a tag is valid according to Pincho rules.
     /// </summary>
     /// <param name="tag">The tag to validate.</param>
     /// <returns>True if the tag is valid; otherwise, false.</returns>

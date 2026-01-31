@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace WirePusher;
+namespace Pincho;
 
 /// <summary>
 /// Response from sending a notification.

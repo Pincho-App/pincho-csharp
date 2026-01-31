@@ -3,26 +3,26 @@ using System.Text;
 using System.Text.Json;
 using Moq;
 using Moq.Protected;
-using WirePusher.Exceptions;
+using Pincho.Exceptions;
 using Xunit;
 
-namespace WirePusher.Tests;
+namespace Pincho.Tests;
 
-public class WirePusherClientTests
+public class PinchoClientTests
 {
     private const string TestToken = "abc12345";
 
     [Fact]
     public void Constructor_WithValidToken_CreatesClient()
     {
-        var client = new WirePusherClient(TestToken);
+        var client = new PinchoClient(TestToken);
         Assert.NotNull(client);
     }
 
     [Fact]
     public void Constructor_WithTimeout_CreatesClient()
     {
-        var client = new WirePusherClient(TestToken, TimeSpan.FromSeconds(60));
+        var client = new PinchoClient(TestToken, TimeSpan.FromSeconds(60));
         Assert.NotNull(client);
     }
 
@@ -32,7 +32,7 @@ public class WirePusherClientTests
     [InlineData("   ")]
     public void Constructor_WithEmptyToken_ThrowsArgumentException(string? token)
     {
-        Assert.Throws<ArgumentException>(() => new WirePusherClient(token!));
+        Assert.Throws<ArgumentException>(() => new PinchoClient(token!));
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient(HttpStatusCode.OK,
             new NotificationResponse("success", "Notification sent successfully"));
 
-        var client = new WirePusherClient(TestToken, httpClient);
+        var client = new PinchoClient(TestToken, httpClient);
 
         var response = await client.SendAsync("Test Title", "Test Message");
 
@@ -57,7 +57,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient(HttpStatusCode.OK,
             new NotificationResponse("success", "Notification sent successfully"));
 
-        var client = new WirePusherClient(TestToken, httpClient);
+        var client = new PinchoClient(TestToken, httpClient);
 
         var notification = new Notification
         {
@@ -80,7 +80,7 @@ public class WirePusherClientTests
     {
         var httpClient = CreateMockHttpClient(HttpStatusCode.OK,
             new NotificationResponse("success", "Test"));
-        var client = new WirePusherClient(TestToken, httpClient);
+        var client = new PinchoClient(TestToken, httpClient);
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
             client.SendNotificationAsync(null!));
@@ -92,7 +92,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient(HttpStatusCode.Unauthorized,
             new { status = "error", error = new { type = "authentication_error", code = "invalid_token", message = "Invalid token" } });
 
-        var client = new WirePusherClient(TestToken, httpClient);
+        var client = new PinchoClient(TestToken, httpClient);
 
         var exception = await Assert.ThrowsAsync<AuthenticationException>(() =>
             client.SendAsync("Test", "Message"));
@@ -107,7 +107,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient(HttpStatusCode.BadRequest,
             new { status = "error", error = new { type = "validation_error", code = "missing_parameter", message = "Title is required", param = "title" } });
 
-        var client = new WirePusherClient(TestToken, httpClient);
+        var client = new PinchoClient(TestToken, httpClient);
 
         var exception = await Assert.ThrowsAsync<ValidationException>(() =>
             client.SendAsync("", "Message"));
@@ -122,7 +122,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient((HttpStatusCode)429,
             new { status = "error", error = new { type = "rate_limit_error", code = "too_many_requests", message = "Rate limit exceeded" } });
 
-        var client = new WirePusherClient(TestToken, httpClient);
+        var client = new PinchoClient(TestToken, httpClient);
 
         var exception = await Assert.ThrowsAsync<RateLimitException>(() =>
             client.SendAsync("Test", "Message"));
@@ -137,7 +137,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient(HttpStatusCode.InternalServerError,
             new { status = "error", error = new { type = "server_error", code = "internal_error", message = "Server error" } }, maxRetries: 0);
 
-        var client = new WirePusherClient(TestToken, httpClient, 0);
+        var client = new PinchoClient(TestToken, httpClient, 0);
 
         var exception = await Assert.ThrowsAsync<ServerException>(() =>
             client.SendAsync("Test", "Message"));
@@ -148,7 +148,7 @@ public class WirePusherClientTests
     }
 
     [Fact]
-    public async Task SendAsync_WithInvalidJson_ThrowsWirePusherException()
+    public async Task SendAsync_WithInvalidJson_ThrowsPinchoException()
     {
         var mockHandler = new Mock<HttpMessageHandler>();
         mockHandler.Protected()
@@ -167,9 +167,9 @@ public class WirePusherClientTests
             BaseAddress = new Uri("https://api.test.com")
         };
 
-        var client = new WirePusherClient(TestToken, httpClient);
+        var client = new PinchoClient(TestToken, httpClient);
 
-        await Assert.ThrowsAsync<WirePusherException>(() =>
+        await Assert.ThrowsAsync<PinchoException>(() =>
             client.SendAsync("Test", "Message"));
     }
 
@@ -202,7 +202,7 @@ public class WirePusherClientTests
             BaseAddress = new Uri("https://api.test.com")
         };
 
-        var client = new WirePusherClient(TestToken, httpClient);
+        var client = new PinchoClient(TestToken, httpClient);
 
         var notification = new Notification
         {
@@ -265,7 +265,7 @@ public class WirePusherClientTests
             BaseAddress = new Uri("https://api.test.com")
         };
 
-        var client = new WirePusherClient(TestToken, httpClient);
+        var client = new PinchoClient(TestToken, httpClient);
 
         var notification = new Notification
         {
@@ -319,7 +319,7 @@ public class WirePusherClientTests
             BaseAddress = new Uri("https://api.test.com")
         };
 
-        var client = new WirePusherClient(TestToken, httpClient);
+        var client = new PinchoClient(TestToken, httpClient);
 
         var notification = new Notification
         {
@@ -384,7 +384,7 @@ public class WirePusherClientTests
             BaseAddress = new Uri("https://api.test.com")
         };
 
-        var client = new WirePusherClient(TestToken, httpClient);
+        var client = new PinchoClient(TestToken, httpClient);
 
         var notification = new Notification
         {
@@ -410,7 +410,7 @@ public class WirePusherClientTests
         var httpClient = CreateMockHttpClient(HttpStatusCode.OK,
             new NotificationResponse("success", "AI notification sent"));
 
-        var client = new WirePusherClient(TestToken, httpClient);
+        var client = new PinchoClient(TestToken, httpClient);
 
         var response = await client.NotifAIAsync("deployment finished, v2.1.3 is live");
 
@@ -447,7 +447,7 @@ public class WirePusherClientTests
             BaseAddress = new Uri("https://api.test.com")
         };
 
-        var client = new WirePusherClient(TestToken, httpClient);
+        var client = new PinchoClient(TestToken, httpClient);
 
         var request = new NotifAIRequest
         {
@@ -484,7 +484,7 @@ public class WirePusherClientTests
             BaseAddress = new Uri("https://api.test.com")
         };
 
-        var client = new WirePusherClient(TestToken, httpClient,2);
+        var client = new PinchoClient(TestToken, httpClient,2);
 
         var exception = await Assert.ThrowsAsync<NetworkException>(() =>
             client.SendAsync("Test", "Message"));
@@ -534,7 +534,7 @@ public class WirePusherClientTests
             Timeout = TimeSpan.FromMinutes(1)
         };
 
-        var client = new WirePusherClient(TestToken, httpClient,3);
+        var client = new PinchoClient(TestToken, httpClient,3);
 
         var response = await client.SendAsync("Test", "Message");
 
@@ -582,7 +582,7 @@ public class WirePusherClientTests
             Timeout = TimeSpan.FromMinutes(1)
         };
 
-        var client = new WirePusherClient(TestToken, httpClient,3);
+        var client = new PinchoClient(TestToken, httpClient,3);
 
         var response = await client.SendAsync("Test", "Message");
 
@@ -618,7 +618,7 @@ public class WirePusherClientTests
             BaseAddress = new Uri("https://api.test.com")
         };
 
-        var client = new WirePusherClient(TestToken, httpClient,3);
+        var client = new PinchoClient(TestToken, httpClient,3);
 
         await Assert.ThrowsAsync<ValidationException>(() => client.SendAsync("", "Message"));
 

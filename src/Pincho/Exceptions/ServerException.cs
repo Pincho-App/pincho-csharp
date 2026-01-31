@@ -1,4 +1,4 @@
-namespace WirePusher.Exceptions;
+namespace Pincho.Exceptions;
 
 /// <summary>
 /// Exception thrown when the server returns a 5xx error.
@@ -6,7 +6,7 @@ namespace WirePusher.Exceptions;
 /// <remarks>
 /// Server exceptions are retryable. The client will automatically retry with exponential backoff.
 /// </remarks>
-public class ServerException : WirePusherException
+public class ServerException : PinchoException
 {
     /// <summary>
     /// Gets a value indicating whether this exception is retryable.

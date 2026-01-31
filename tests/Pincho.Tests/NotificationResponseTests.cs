@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace WirePusher.Tests;
+namespace Pincho.Tests;
 
 public class NotificationResponseTests
 {

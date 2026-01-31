@@ -1,8 +1,8 @@
-using WirePusher;
-using WirePusher.Exceptions;
+using Pincho;
+using Pincho.Exceptions;
 
 var token = Environment.GetEnvironmentVariable("WIREPUSHER_TOKEN") ?? "your_token_here";
-var client = new WirePusherClient(token);
+var client = new PinchoClient(token);
 
 Console.WriteLine("Demonstrating error handling patterns...\n");
 
@@ -22,7 +22,7 @@ catch (WirePusherException ex)
 Console.WriteLine("\n2. Testing with invalid token...");
 try
 {
-    var badClient = new WirePusherClient("invalid_token");
+    var badClient = new PinchoClient("invalid_token");
     await badClient.SendAsync("Test", "This will fail");
 }
 catch (AuthenticationException ex)

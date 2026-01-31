@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../src/WirePusher/WirePusher.csproj" />
+    <ProjectReference Include="../../src/Pincho/Pincho.csproj" />
   </ItemGroup>
 
 </Project>

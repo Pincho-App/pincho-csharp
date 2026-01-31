@@ -1,9 +1,9 @@
-namespace WirePusher;
+namespace Pincho;
 
 /// <summary>
-/// Interface for the WirePusher API client.
+/// Interface for the Pincho API client.
 /// </summary>
-public interface IWirePusherClient
+public interface IPinchoClient
 {
     /// <summary>
     /// Sends a simple notification with title and message.
@@ -12,7 +12,7 @@ public interface IWirePusherClient
     /// <param name="message">The notification message (required, max 4096 characters).</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The notification response.</returns>
-    /// <exception cref="WirePusher.Exceptions.WirePusherException">Thrown when the request fails.</exception>
+    /// <exception cref="Pincho.Exceptions.PinchoException">Thrown when the request fails.</exception>
     Task<NotificationResponse> SendAsync(
         string title,
         string message,
@@ -24,7 +24,7 @@ public interface IWirePusherClient
     /// <param name="notification">The notification to send.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The notification response.</returns>
-    /// <exception cref="WirePusher.Exceptions.WirePusherException">Thrown when the request fails.</exception>
+    /// <exception cref="Pincho.Exceptions.PinchoException">Thrown when the request fails.</exception>
     Task<NotificationResponse> SendNotificationAsync(
         Notification notification,
         CancellationToken cancellationToken = default);
@@ -35,7 +35,7 @@ public interface IWirePusherClient
     /// <param name="text">The free-form text to convert to a notification.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The notification response.</returns>
-    /// <exception cref="WirePusher.Exceptions.WirePusherException">Thrown when the request fails.</exception>
+    /// <exception cref="Pincho.Exceptions.PinchoException">Thrown when the request fails.</exception>
     /// <remarks>
     /// NotifAI uses Gemini AI to convert free-form text into structured notifications
     /// with automatically generated title, message, tags, and action URL.
@@ -51,7 +51,7 @@ public interface IWirePusherClient
     /// <param name="request">The NotifAI request with input and optional type/encryption.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The notification response.</returns>
-    /// <exception cref="WirePusher.Exceptions.WirePusherException">Thrown when the request fails.</exception>
+    /// <exception cref="Pincho.Exceptions.PinchoException">Thrown when the request fails.</exception>
     /// <remarks>
     /// NotifAI uses Gemini AI to convert free-form text into structured notifications
     /// with automatically generated title, message, tags, and action URL.

@@ -1,7 +1,7 @@
-using WirePusher.Validation;
+using Pincho.Validation;
 using Xunit;
 
-namespace WirePusher.Tests;
+namespace Pincho.Tests;
 
 public class TagNormalizerTests
 {

@@ -1,9 +1,9 @@
-using WirePusher;
+using Pincho;
 
 // Get token from environment variable or use default for testing
 var token = Environment.GetEnvironmentVariable("WIREPUSHER_TOKEN") ?? "your_token_here";
 
-var client = new WirePusherClient(token);
+var client = new PinchoClient(token);
 
 // Send a simple notification
 Console.WriteLine("Sending basic notification...");

@@ -1,8 +1,8 @@
 using System.Text;
-using WirePusher.Crypto;
+using Pincho.Crypto;
 using Xunit;
 
-namespace WirePusher.Tests;
+namespace Pincho.Tests;
 
 public class EncryptionUtilTests
 {
@@ -341,7 +341,7 @@ public class EncryptionUtilTests
     [Fact]
     public void EncryptionFlow_FullEndToEndTest()
     {
-        // Simulate full encryption flow as used in WirePusherClient
+        // Simulate full encryption flow as used in PinchoClient
         var message = "Sensitive notification data";
         var password = "my-encryption-password";
 

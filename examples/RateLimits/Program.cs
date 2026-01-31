@@ -1,7 +1,7 @@
-using WirePusher;
+using Pincho;
 
 var token = Environment.GetEnvironmentVariable("WIREPUSHER_TOKEN") ?? "your_token_here";
-var client = new WirePusherClient(token);
+var client = new PinchoClient(token);
 
 Console.WriteLine("Rate Limit Monitoring Example\n");
 Console.WriteLine("Note: Rate limit information is returned in HTTP headers.");

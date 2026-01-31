@@ -1,9 +1,9 @@
-namespace WirePusher.Exceptions;
+namespace Pincho.Exceptions;
 
 /// <summary>
 /// Exception thrown when request validation fails (400/404 errors).
 /// </summary>
-public class ValidationException : WirePusherException
+public class ValidationException : PinchoException
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ValidationException"/> class.

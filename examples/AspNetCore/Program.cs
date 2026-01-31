@@ -1,35 +1,35 @@
-using WirePusher;
+using Pincho;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Register WirePusher client as singleton
-// IWirePusherClient interface enables dependency injection and testing
-builder.Services.AddSingleton<IWirePusherClient>(sp =>
+// IPinchoClient interface enables dependency injection and testing
+builder.Services.AddSingleton<IPinchoClient>(sp =>
 {
-    var token = builder.Configuration["WirePusher:Token"]
+    var token = builder.Configuration["Pincho:Token"]
         ?? Environment.GetEnvironmentVariable("WIREPUSHER_TOKEN")
         ?? "your_token_here";
-    return new WirePusherClient(token);
+    return new PinchoClient(token);
 });
 
 var app = builder.Build();
 
 // Simple endpoint to send notifications
-app.MapPost("/notify", async (IWirePusherClient client, NotifyRequest request) =>
+app.MapPost("/notify", async (IPinchoClient client, NotifyRequest request) =>
 {
     var response = await client.SendAsync(request.Title, request.Message ?? "");
     return Results.Ok(new { response.Status, response.Message });
 });
 
 // Endpoint with full notification options
-app.MapPost("/notify/advanced", async (IWirePusherClient client, Notification notification) =>
+app.MapPost("/notify/advanced", async (IPinchoClient client, Notification notification) =>
 {
     var response = await client.SendNotificationAsync(notification);
     return Results.Ok(new { response.Status, response.Message });
 });
 
 // NotifAI endpoint
-app.MapPost("/notify/ai", async (IWirePusherClient client, string text) =>
+app.MapPost("/notify/ai", async (IPinchoClient client, string text) =>
 {
     var response = await client.NotifAIAsync(text);
     return Results.Ok(new { response.Status, response.Message });

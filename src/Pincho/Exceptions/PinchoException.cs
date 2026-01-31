@@ -1,9 +1,9 @@
-namespace WirePusher.Exceptions;
+namespace Pincho.Exceptions;
 
 /// <summary>
-/// Base exception for all WirePusher Client Library errors.
+/// Base exception for all Pincho Client Library errors.
 /// </summary>
-public class WirePusherException : Exception
+public class PinchoException : Exception
 {
     /// <summary>
     /// Gets the HTTP status code associated with this exception, or 0 if not applicable.
@@ -20,10 +20,10 @@ public class WirePusherException : Exception
     public virtual bool IsRetryable { get; }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="WirePusherException"/> class.
+    /// Initializes a new instance of the <see cref="PinchoException"/> class.
     /// </summary>
     /// <param name="message">The error message.</param>
-    public WirePusherException(string message)
+    public PinchoException(string message)
         : base(message)
     {
         StatusCode = 0;
@@ -31,11 +31,11 @@ public class WirePusherException : Exception
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="WirePusherException"/> class.
+    /// Initializes a new instance of the <see cref="PinchoException"/> class.
     /// </summary>
     /// <param name="message">The error message.</param>
     /// <param name="statusCode">The HTTP status code.</param>
-    public WirePusherException(string message, int statusCode)
+    public PinchoException(string message, int statusCode)
         : base(message)
     {
         StatusCode = statusCode;
@@ -43,11 +43,11 @@ public class WirePusherException : Exception
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="WirePusherException"/> class.
+    /// Initializes a new instance of the <see cref="PinchoException"/> class.
     /// </summary>
     /// <param name="message">The error message.</param>
     /// <param name="innerException">The inner exception.</param>
-    public WirePusherException(string message, Exception innerException)
+    public PinchoException(string message, Exception innerException)
         : base(message, innerException)
     {
         StatusCode = 0;
@@ -55,12 +55,12 @@ public class WirePusherException : Exception
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="WirePusherException"/> class.
+    /// Initializes a new instance of the <see cref="PinchoException"/> class.
     /// </summary>
     /// <param name="message">The error message.</param>
     /// <param name="statusCode">The HTTP status code.</param>
     /// <param name="innerException">The inner exception.</param>
-    public WirePusherException(string message, int statusCode, Exception innerException)
+    public PinchoException(string message, int statusCode, Exception innerException)
         : base(message, innerException)
     {
         StatusCode = statusCode;
@@ -68,12 +68,12 @@ public class WirePusherException : Exception
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="WirePusherException"/> class.
+    /// Initializes a new instance of the <see cref="PinchoException"/> class.
     /// </summary>
     /// <param name="message">The error message.</param>
     /// <param name="statusCode">The HTTP status code.</param>
     /// <param name="isRetryable">Whether this error is retryable.</param>
-    protected WirePusherException(string message, int statusCode, bool isRetryable)
+    protected PinchoException(string message, int statusCode, bool isRetryable)
         : base(message)
     {
         StatusCode = statusCode;
@@ -81,13 +81,13 @@ public class WirePusherException : Exception
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="WirePusherException"/> class.
+    /// Initializes a new instance of the <see cref="PinchoException"/> class.
     /// </summary>
     /// <param name="message">The error message.</param>
     /// <param name="statusCode">The HTTP status code.</param>
     /// <param name="isRetryable">Whether this error is retryable.</param>
     /// <param name="innerException">The inner exception.</param>
-    protected WirePusherException(string message, int statusCode, bool isRetryable, Exception innerException)
+    protected PinchoException(string message, int statusCode, bool isRetryable, Exception innerException)
         : base(message, innerException)
     {
         StatusCode = statusCode;

@@ -1,6 +1,6 @@
 # Advanced Documentation
 
-Advanced configuration, patterns, and API reference for the WirePusher C# Client Library.
+Advanced configuration, patterns, and API reference for the Pincho C# Client Library.
 
 ## Table of Contents
 
@@ -13,20 +13,20 @@ Advanced configuration, patterns, and API reference for the WirePusher C# Client
 
 ## API Reference
 
-### WirePusherClient
+### PinchoClient
 
-Main client class implementing `IWirePusherClient`.
+Main client class implementing `IPinchoClient`.
 
 ```csharp
 // Constructor variants
-public WirePusherClient(string token)
-public WirePusherClient(string token, TimeSpan timeout)
-public WirePusherClient(string token, HttpClient httpClient)
-public WirePusherClient(string token, HttpClient httpClient, int maxRetries)
+public PinchoClient(string token)
+public PinchoClient(string token, TimeSpan timeout)
+public PinchoClient(string token, HttpClient httpClient)
+public PinchoClient(string token, HttpClient httpClient, int maxRetries)
 ```
 
 **Parameters:**
-- `token` - WirePusher API token (required)
+- `token` - Pincho API token (required)
 - `timeout` - Request timeout (default: 30 seconds)
 - `httpClient` - Custom HttpClient instance (for testing or advanced scenarios)
 - `maxRetries` - Maximum retry attempts (default: 3)
@@ -118,7 +118,7 @@ public record NotificationResponse
 
 ### Exceptions
 
-All exceptions inherit from `WirePusherException` and include an `IsRetryable` property.
+All exceptions inherit from `PinchoException` and include an `IsRetryable` property.
 
 | Exception | Status Code | IsRetryable | Description |
 |-----------|-------------|-------------|-------------|
@@ -127,7 +127,7 @@ All exceptions inherit from `WirePusherException` and include an `IsRetryable` p
 | `RateLimitException` | 429 | true | Rate limit exceeded |
 | `ServerException` | 5xx | true | Server-side error |
 | `NetworkException` | N/A | true | Network or timeout error |
-| `WirePusherException` | Other | varies | Base exception class |
+| `PinchoException` | Other | varies | Base exception class |
 
 ## ASP.NET Core Patterns
 
@@ -137,11 +137,11 @@ All exceptions inherit from `WirePusherException` and include an `IsRetryable` p
 // Program.cs
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddSingleton<IWirePusherClient>(sp =>
+builder.Services.AddSingleton<IPinchoClient>(sp =>
 {
-    var token = builder.Configuration["WirePusher:Token"]
-        ?? throw new InvalidOperationException("WirePusher token not configured");
-    return new WirePusherClient(token);
+    var token = builder.Configuration["Pincho:Token"]
+        ?? throw new InvalidOperationException("Pincho token not configured");
+    return new PinchoClient(token);
 });
 ```
 
@@ -149,7 +149,7 @@ builder.Services.AddSingleton<IWirePusherClient>(sp =>
 
 ```json
 {
-  "WirePusher": {
+  "Pincho": {
     "Token": "abc12345"
   }
 }
@@ -162,9 +162,9 @@ builder.Services.AddSingleton<IWirePusherClient>(sp =>
 [Route("api/[controller]")]
 public class NotificationsController : ControllerBase
 {
-    private readonly IWirePusherClient _client;
+    private readonly IPinchoClient _client;
 
-    public NotificationsController(IWirePusherClient client)
+    public NotificationsController(IPinchoClient client)
     {
         _client = client;
     }
@@ -181,7 +181,7 @@ public class NotificationsController : ControllerBase
         {
             return StatusCode(503, "Notification service unavailable");
         }
-        catch (WirePusherException ex)
+        catch (PinchoException ex)
         {
             return StatusCode(500, $"Failed to send notification: {ex.Message}");
         }
@@ -194,10 +194,10 @@ public class NotificationsController : ControllerBase
 ```csharp
 public class AlertMonitorService : BackgroundService
 {
-    private readonly IWirePusherClient _client;
+    private readonly IPinchoClient _client;
     private readonly ILogger<AlertMonitorService> _logger;
 
-    public AlertMonitorService(IWirePusherClient client, ILogger<AlertMonitorService> logger)
+    public AlertMonitorService(IPinchoClient client, ILogger<AlertMonitorService> logger)
     {
         _client = client;
         _logger = logger;
@@ -234,13 +234,13 @@ public class AlertMonitorService : BackgroundService
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddSingleton<IWirePusherClient>(
-    _ => new WirePusherClient(builder.Configuration["WirePusher:Token"]!));
+builder.Services.AddSingleton<IPinchoClient>(
+    _ => new PinchoClient(builder.Configuration["Pincho:Token"]!));
 
 var app = builder.Build();
 
 app.MapPost("/notify", async (
-    IWirePusherClient client,
+    IPinchoClient client,
     NotifyRequest request) =>
 {
     await client.SendAsync(request.Title, request.Message);
@@ -254,7 +254,7 @@ record NotifyRequest(string Title, string Message);
 
 ## Encryption
 
-WirePusher supports AES-128-CBC encryption for message privacy.
+Pincho supports AES-128-CBC encryption for message privacy.
 
 ### How It Works
 
@@ -292,7 +292,7 @@ await client.SendNotificationAsync(notification);
 
 To receive encrypted messages:
 
-1. Open WirePusher app
+1. Open Pincho app
 2. Go to Settings → Notification Types
 3. Select or create a notification type
 4. Enable encryption and set the same password
@@ -344,15 +344,15 @@ The client automatically retries failed requests with exponential backoff.
 
 ```csharp
 // Default: 3 retries
-var client = new WirePusherClient("token");
+var client = new PinchoClient("token");
 
 // Custom: 5 retries
-var httpClient = new HttpClient { BaseAddress = new Uri("https://api.wirepusher.dev/") };
+var httpClient = new HttpClient { BaseAddress = new Uri("https://api.pincho.app/") };
 httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer token");
-var client = new WirePusherClient("token", httpClient, maxRetries: 5);
+var client = new PinchoClient("token", httpClient, maxRetries: 5);
 
 // Disable retries
-var client = new WirePusherClient("token", httpClient, maxRetries: 0);
+var client = new PinchoClient("token", httpClient, maxRetries: 0);
 ```
 
 ### Retry Behavior
@@ -397,9 +397,9 @@ catch (ServerException ex)
 ```csharp
 public class BuildNotifier
 {
-    private readonly IWirePusherClient _client;
+    private readonly IPinchoClient _client;
 
-    public BuildNotifier(IWirePusherClient client)
+    public BuildNotifier(IPinchoClient client)
     {
         _client = client;
     }
@@ -425,7 +425,7 @@ public class BuildNotifier
 ```csharp
 public class HealthMonitor
 {
-    private readonly IWirePusherClient _client;
+    private readonly IPinchoClient _client;
     private readonly ILogger _logger;
 
     public async Task CheckServerHealthAsync()
@@ -477,7 +477,7 @@ Let AI generate the notification structure:
 ```csharp
 public class AINotifier
 {
-    private readonly IWirePusherClient _client;
+    private readonly IPinchoClient _client;
 
     public async Task NotifyWithAIAsync(string eventDescription)
     {
@@ -524,10 +524,10 @@ dotnet test --collect:"XPlat Code Coverage"
 ### Project Structure
 
 ```
-wirepusher-csharp/
-├── src/WirePusher/
-│   ├── WirePusherClient.cs           # Main client
-│   ├── IWirePusherClient.cs          # Interface for DI
+pincho-csharp/
+├── src/Pincho/
+│   ├── PinchoClient.cs           # Main client
+│   ├── IPinchoClient.cs          # Interface for DI
 │   ├── Notification.cs               # Request model
 │   ├── NotifAIRequest.cs             # AI request model
 │   ├── NotificationResponse.cs       # Response model
@@ -536,14 +536,14 @@ wirepusher-csharp/
 │   ├── Validation/
 │   │   └── TagNormalizer.cs          # Tag processing
 │   └── Exceptions/
-│       ├── WirePusherException.cs
+│       ├── PinchoException.cs
 │       ├── AuthenticationException.cs
 │       ├── ValidationException.cs
 │       ├── RateLimitException.cs
 │       ├── ServerException.cs
 │       └── NetworkException.cs
-└── tests/WirePusher.Tests/
-    ├── WirePusherClientTests.cs
+└── tests/Pincho.Tests/
+    ├── PinchoClientTests.cs
     ├── TagNormalizerTests.cs
     └── EncryptionUtilTests.cs
 ```
@@ -552,4 +552,4 @@ wirepusher-csharp/
 
 - [README.md](../README.md) - Quick start guide
 - [SECURITY.md](SECURITY.md) - Security policy
-- [WirePusher Documentation](https://wirepusher.dev/help)
+- [Pincho Documentation](https://pincho.dev/help)

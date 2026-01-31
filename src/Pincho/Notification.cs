@@ -1,9 +1,9 @@
 using System.Text.Json.Serialization;
 
-namespace WirePusher;
+namespace Pincho;
 
 /// <summary>
-/// Represents a notification to be sent via WirePusher.
+/// Represents a notification to be sent via Pincho.
 /// </summary>
 public record Notification
 {
@@ -52,7 +52,7 @@ public record Notification
     /// </summary>
     /// <remarks>
     /// When provided, the message will be encrypted client-side before sending.
-    /// Password must match the type configuration in the WirePusher app.
+    /// Password must match the type configuration in the Pincho app.
     /// Password is never sent to the API - used only for local encryption.
     /// </remarks>
     [JsonIgnore]

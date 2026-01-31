@@ -1,10 +1,10 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace WirePusher.Crypto;
+namespace Pincho.Crypto;
 
 /// <summary>
-/// Utility class for AES-128-CBC encryption matching WirePusher app decryption.
+/// Utility class for AES-128-CBC encryption matching Pincho app decryption.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -19,7 +19,7 @@ namespace WirePusher.Crypto;
 /// <para><strong>Important Security Notes:</strong></para>
 /// <list type="bullet">
 /// <item><description>Only the message body is encrypted; title, type, tags, and URLs remain unencrypted</description></item>
-/// <item><description>Password must match the type configuration in the WirePusher app</description></item>
+/// <item><description>Password must match the type configuration in the Pincho app</description></item>
 /// <item><description>Password is never sent to the API (used only for local encryption)</description></item>
 /// <item><description>Each message uses a unique randomly generated initialization vector (IV)</description></item>
 /// </list>
@@ -50,7 +50,7 @@ public static class EncryptionUtil
     public record IVResult(byte[] IVBytes, string IVHex);
 
     /// <summary>
-    /// Encodes bytes using custom Base64 encoding matching WirePusher app.
+    /// Encodes bytes using custom Base64 encoding matching Pincho app.
     /// </summary>
     /// <remarks>
     /// Converts standard Base64 characters:
@@ -103,7 +103,7 @@ public static class EncryptionUtil
     /// Encrypts a message using AES-128-CBC with custom Base64 encoding.
     /// </summary>
     /// <remarks>
-    /// <para>Encryption process matching WirePusher app:</para>
+    /// <para>Encryption process matching Pincho app:</para>
     /// <list type="number">
     /// <item><description>Derive key from password using SHA1</description></item>
     /// <item><description>Apply PKCS7 padding to plaintext</description></item>

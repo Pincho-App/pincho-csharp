@@ -1,4 +1,4 @@
-namespace WirePusher.Exceptions;
+namespace Pincho.Exceptions;
 
 /// <summary>
 /// Exception thrown when a network error occurs.
@@ -7,7 +7,7 @@ namespace WirePusher.Exceptions;
 /// Network exceptions are retryable. The client will automatically retry with exponential backoff.
 /// This includes DNS failures, connection timeouts, and other network-level errors.
 /// </remarks>
-public class NetworkException : WirePusherException
+public class NetworkException : PinchoException
 {
     /// <summary>
     /// Gets a value indicating whether this exception is retryable.

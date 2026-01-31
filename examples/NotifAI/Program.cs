@@ -1,7 +1,7 @@
-using WirePusher;
+using Pincho;
 
 var token = Environment.GetEnvironmentVariable("WIREPUSHER_TOKEN") ?? "your_token_here";
-var client = new WirePusherClient(token);
+var client = new PinchoClient(token);
 
 // Send free-form text, AI generates structured notification
 var text = "deployment finished successfully, v2.1.3 is live on production servers";

@@ -1,4 +1,4 @@
-namespace WirePusher.Exceptions;
+namespace Pincho.Exceptions;
 
 /// <summary>
 /// Exception thrown when rate limit is exceeded (429 errors).
@@ -6,7 +6,7 @@ namespace WirePusher.Exceptions;
 /// <remarks>
 /// Rate limit exceptions are retryable. The client will automatically retry with exponential backoff.
 /// </remarks>
-public class RateLimitException : WirePusherException
+public class RateLimitException : PinchoException
 {
     /// <summary>
     /// Gets a value indicating whether this exception is retryable.

@@ -8,14 +8,14 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <!-- Package metadata -->
-    <PackageId>WirePusher</PackageId>
-    <Version>1.0.0</Version>
-    <Authors>WirePusher</Authors>
-    <Company>WirePusher</Company>
-    <Description>Official WirePusher Client Library for .NET - Send push notifications to your mobile devices</Description>
-    <PackageTags>wirepusher;push-notifications;notifications;alerts;dotnet</PackageTags>
-    <PackageProjectUrl>https://gitlab.com/wirepusher/wirepusher-csharp</PackageProjectUrl>
-    <RepositoryUrl>https://gitlab.com/wirepusher/wirepusher-csharp.git</RepositoryUrl>
+    <PackageId>Pincho</PackageId>
+    <Version>1.0.0-alpha.1</Version>
+    <Authors>Pincho</Authors>
+    <Company>Pincho</Company>
+    <Description>Official Pincho SDK for .NET - Send push notifications to your mobile devices</Description>
+    <PackageTags>pincho;push-notifications;notifications;alerts;dotnet</PackageTags>
+    <PackageProjectUrl>https://gitlab.com/pincho-app/pincho-csharp</PackageProjectUrl>
+    <RepositoryUrl>https://gitlab.com/pincho-app/pincho-csharp.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>

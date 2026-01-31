@@ -1,0 +1,100 @@
+# GitLab CI configuration for Pincho C# SDK
+#
+# Triggers:
+#   - Push to any branch: Runs build and test
+#   - Push tag v*.*.*: Runs full pipeline including NuGet publish
+#
+# Required CI/CD variables (group level):
+#   - NUGET_API_KEY: NuGet API key for publishing (protected)
+#   - PINCHO_TOKEN: Pincho API token for notifications
+
+stages:
+  - build
+  - test
+  - publish
+  - notify
+
+variables:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
+
+default:
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+
+# =============================================================================
+# BUILD STAGE
+# =============================================================================
+
+build:
+  stage: build
+  script:
+    - echo "=== Restoring dependencies ==="
+    - dotnet restore
+    - echo "=== Building solution ==="
+    - dotnet build --configuration Release --no-restore
+  artifacts:
+    paths:
+      - src/Pincho/bin/
+      - src/Pincho/obj/
+      - tests/Pincho.Tests/bin/
+      - tests/Pincho.Tests/obj/
+    expire_in: 1 hour
+
+# =============================================================================
+# TEST STAGE
+# =============================================================================
+
+test:
+  stage: test
+  needs: [build]
+  script:
+    - echo "=== Running tests ==="
+    - dotnet test --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory ./TestResults
+    - echo "Tests passed"
+  coverage: '/Total\s*\|\s*(\d+(?:\.\d+)?)%/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: TestResults/**/coverage.cobertura.xml
+    expire_in: 7 days
+
+# =============================================================================
+# PUBLISH STAGE (tags only)
+# =============================================================================
+
+publish:nuget:
+  stage: publish
+  needs: [test]
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+)?$/
+  script:
+    - echo "=== Packing NuGet package ==="
+    - VERSION=$(echo $CI_COMMIT_TAG | sed 's/^v//')
+    - dotnet pack src/Pincho/Pincho.csproj --configuration Release --no-build -p:PackageVersion=$VERSION --output ./artifacts
+    - echo "=== Publishing to NuGet ==="
+    - dotnet nuget push ./artifacts/*.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+    - echo "Published $CI_COMMIT_TAG to NuGet"
+  artifacts:
+    paths:
+      - artifacts/*.nupkg
+    expire_in: 30 days
+
+# =============================================================================
+# NOTIFY STAGE (tags only)
+# =============================================================================
+
+notify:pincho:
+  stage: notify
+  image: curlimages/curl:latest
+  needs: [publish:nuget]
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+)?$/
+  script:
+    - echo "=== Sending release notification via NotifAI ==="
+    - |
+      curl -s -X POST https://api.pincho.app/notifai \
+        -H "Authorization: Bearer $PINCHO_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d "{\"text\": \"Pincho C# SDK $CI_COMMIT_TAG published to NuGet. Install via dotnet add package Pincho.\", \"type\": \"release\"}"
+    - echo "Release notification sent"
