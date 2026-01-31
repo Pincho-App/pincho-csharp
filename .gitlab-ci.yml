@@ -69,6 +69,9 @@ publish:nuget:
   rules:
     - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+)?$/
   script:
+    - echo "=== Restoring and building ==="
+    - dotnet restore
+    - dotnet build --configuration Release --no-restore
     - echo "=== Packing NuGet package ==="
     - VERSION=$(echo $CI_COMMIT_TAG | sed 's/^v//')
     - dotnet pack src/Pincho/Pincho.csproj --configuration Release --no-build -p:PackageVersion=$VERSION --output ./artifacts
