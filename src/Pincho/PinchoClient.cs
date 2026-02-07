@@ -128,18 +128,46 @@ public class PinchoClient : IPinchoClient
         return await ExecuteWithRetryAsync(async () =>
         {
             // Handle encryption if password provided
+            // Encrypted fields: title, message, imageUrl, actionUrl
+            // NOT encrypted: type, tags (needed for filtering/routing)
+            var finalTitle = notification.Title;
             var finalMessage = notification.Message;
+            var finalImageUrl = notification.ImageUrl;
+            var finalActionUrl = notification.ActionUrl;
             string? ivHex = null;
 
             if (!string.IsNullOrWhiteSpace(notification.EncryptionPassword))
             {
                 var ivResult = EncryptionUtil.GenerateIV();
+                var ivBytes = ivResult.IVBytes;
+                ivHex = ivResult.IVHex;
+
+                finalTitle = EncryptionUtil.EncryptMessage(
+                    notification.Title,
+                    notification.EncryptionPassword,
+                    ivBytes
+                );
                 finalMessage = EncryptionUtil.EncryptMessage(
                     notification.Message,
                     notification.EncryptionPassword,
-                    ivResult.IVBytes
+                    ivBytes
                 );
-                ivHex = ivResult.IVHex;
+                if (notification.ImageUrl != null)
+                {
+                    finalImageUrl = EncryptionUtil.EncryptMessage(
+                        notification.ImageUrl,
+                        notification.EncryptionPassword,
+                        ivBytes
+                    );
+                }
+                if (notification.ActionUrl != null)
+                {
+                    finalActionUrl = EncryptionUtil.EncryptMessage(
+                        notification.ActionUrl,
+                        notification.EncryptionPassword,
+                        ivBytes
+                    );
+                }
             }
 
             // Normalize tags
@@ -148,7 +176,7 @@ public class PinchoClient : IPinchoClient
             // Build request payload
             var payload = new Dictionary<string, object?>
             {
-                ["title"] = notification.Title,
+                ["title"] = finalTitle,
                 ["message"] = finalMessage
             };
 
@@ -158,11 +186,11 @@ public class PinchoClient : IPinchoClient
             if (normalizedTags is { Length: > 0 })
                 payload["tags"] = normalizedTags;
 
-            if (notification.ImageUrl != null)
-                payload["imageURL"] = notification.ImageUrl;
+            if (finalImageUrl != null)
+                payload["imageURL"] = finalImageUrl;
 
-            if (notification.ActionUrl != null)
-                payload["actionURL"] = notification.ActionUrl;
+            if (finalActionUrl != null)
+                payload["actionURL"] = finalActionUrl;
 
             if (ivHex != null)
                 payload["iv"] = ivHex;

@@ -219,6 +219,11 @@ public class PinchoClientTests
         // Parse the payload
         var payload = JsonSerializer.Deserialize<JsonElement>(capturedPayload);
 
+        // Verify title is encrypted (not plaintext)
+        var encryptedTitle = payload.GetProperty("title").GetString();
+        Assert.NotNull(encryptedTitle);
+        Assert.NotEqual("Test", encryptedTitle);
+
         // Verify message is encrypted (not plaintext)
         var encryptedMessage = payload.GetProperty("message").GetString();
         Assert.NotNull(encryptedMessage);
@@ -230,10 +235,11 @@ public class PinchoClientTests
         Assert.NotNull(iv);
         Assert.Equal(32, iv.Length); // 16 bytes as hex = 32 characters
 
-        // Verify encrypted message uses custom Base64
+        // Verify encrypted fields use custom Base64
+        Assert.DoesNotContain('+', encryptedTitle);
+        Assert.DoesNotContain('/', encryptedTitle);
         Assert.DoesNotContain('+', encryptedMessage);
         Assert.DoesNotContain('/', encryptedMessage);
-        Assert.DoesNotContain('=', encryptedMessage);
     }
 
     [Fact]

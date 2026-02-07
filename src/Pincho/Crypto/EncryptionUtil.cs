@@ -18,7 +18,8 @@ namespace Pincho.Crypto;
 /// </list>
 /// <para><strong>Important Security Notes:</strong></para>
 /// <list type="bullet">
-/// <item><description>Only the message body is encrypted; title, type, tags, and URLs remain unencrypted</description></item>
+/// <item><description>Encrypted fields: title, message, imageUrl, actionUrl (all use same IV)</description></item>
+/// <item><description>NOT encrypted: type, tags (needed for filtering/routing)</description></item>
 /// <item><description>Password must match the type configuration in the Pincho app</description></item>
 /// <item><description>Password is never sent to the API (used only for local encryption)</description></item>
 /// <item><description>Each message uses a unique randomly generated initialization vector (IV)</description></item>
