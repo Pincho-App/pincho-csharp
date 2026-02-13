@@ -1,0 +1,131 @@
+# GitHub Actions CI for Pincho C# SDK
+#
+# Triggers:
+#   - Push to main: Runs build and test
+#   - Pull request to main: Runs build and test
+#   - Push tag v*: Runs full pipeline including NuGet publish and notification
+#
+# Required secrets:
+#   - NUGET_API_KEY: NuGet API key for publishing
+#   - PINCHO_TOKEN: Pincho API token for release notifications
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
+
+jobs:
+  # ===========================================================================
+  # BUILD
+  # ===========================================================================
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+  # ===========================================================================
+  # TEST
+  # ===========================================================================
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test with coverage
+        run: dotnet test --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory ./TestResults
+
+      - name: Upload coverage results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: TestResults/**/coverage.cobertura.xml
+          retention-days: 7
+
+  # ===========================================================================
+  # PUBLISH (tags only)
+  # ===========================================================================
+  publish:
+    name: Publish to NuGet
+    runs-on: ubuntu-latest
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Pack NuGet package
+        run: dotnet pack src/Pincho/Pincho.csproj --configuration Release --no-build -p:PackageVersion=${{ steps.version.outputs.VERSION }} --output ./artifacts
+
+      - name: Publish to NuGet
+        run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Upload NuGet package
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-package
+          path: artifacts/*.nupkg
+          retention-days: 30
+
+  # ===========================================================================
+  # NOTIFY (tags only)
+  # ===========================================================================
+  notify:
+    name: Send release notification
+    runs-on: ubuntu-latest
+    needs: publish
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Send notification via NotifAI
+        run: |
+          curl -s -X POST https://api.pincho.app/notifai \
+            -H "Authorization: Bearer ${{ secrets.PINCHO_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"text\": \"Pincho C# SDK ${{ github.ref_name }} published to NuGet. Install via dotnet add package Pincho.\", \"type\": \"release\"}"

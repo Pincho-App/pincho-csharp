@@ -43,5 +43,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - .NET 6+ built-in HttpClient (no external HTTP library required)
 - System.Text.Json (built-in, no Newtonsoft.Json required)
 
-[Unreleased]: https://gitlab.com/wirepusher/wirepusher-csharp/-/compare/v1.0.0...main
-[1.0.0]: https://gitlab.com/wirepusher/wirepusher-csharp/-/tags/v1.0.0
+[Unreleased]: https://github.com/Pincho-App/pincho-csharp/compare/v1.0.0...main
+[1.0.0]: https://github.com/Pincho-App/pincho-csharp/releases/tag/v1.0.0

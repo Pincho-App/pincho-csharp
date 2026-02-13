@@ -139,7 +139,7 @@ public class NotificationService(IPinchoClient client)
 
 - **Get Token**: App → Settings → Help → copy token
 - **Documentation**: https://pincho.app/help
-- **Repository**: https://gitlab.com/pincho-app/pincho-csharp
+- **Repository**: https://github.com/Pincho-App/pincho-csharp
 - **NuGet**: https://www.nuget.org/packages/Pincho/
 - **Advanced Docs**: [docs/ADVANCED.md](docs/ADVANCED.md)
 

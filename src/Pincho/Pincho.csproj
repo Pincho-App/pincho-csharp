@@ -14,8 +14,8 @@
     <Company>Pincho</Company>
     <Description>Official Pincho SDK for .NET - Send push notifications to your mobile devices</Description>
     <PackageTags>pincho;push-notifications;notifications;alerts;dotnet</PackageTags>
-    <PackageProjectUrl>https://gitlab.com/pincho-app/pincho-csharp</PackageProjectUrl>
-    <RepositoryUrl>https://gitlab.com/pincho-app/pincho-csharp.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/Pincho-App/pincho-csharp</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Pincho-App/pincho-csharp.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>

@@ -552,4 +552,4 @@ pincho-csharp/
 
 - [README.md](../README.md) - Quick start guide
 - [SECURITY.md](SECURITY.md) - Security policy
-- [Pincho Documentation](https://pincho.dev/help)
+- [Pincho Documentation](https://pincho.app/help)

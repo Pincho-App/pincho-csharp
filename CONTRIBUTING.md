@@ -10,8 +10,8 @@ Be respectful and constructive. See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for
 
 ```bash
 # Get the code
-git clone https://gitlab.com/wirepusher/wirepusher-csharp.git
-cd wirepusher-csharp
+git clone https://github.com/Pincho-App/pincho-csharp.git
+cd pincho-csharp
 
 # Restore dependencies
 dotnet restore
@@ -33,7 +33,7 @@ dotnet build -p:TreatWarningsAsErrors=true
 
 ### Report a Bug
 
-[Check existing issues](https://gitlab.com/wirepusher/wirepusher-csharp/-/issues) first, then create a new one with:
+[Check existing issues](https://github.com/Pincho-App/pincho-csharp/issues) first, then create a new one with:
 
 - What you did (exact code)
 - What happened vs what you expected
