@@ -297,7 +297,7 @@ public class PinchoClientTests
     }
 
     [Fact]
-    public async Task SendNotificationAsync_WithEncryption_OnlyEncryptsMessage()
+    public async Task SendNotificationAsync_WithEncryption_EncryptsContentFields()
     {
         string? capturedPayload = null;
 
@@ -345,20 +345,20 @@ public class PinchoClientTests
 
         var payload = JsonSerializer.Deserialize<JsonElement>(capturedPayload);
 
-        // Verify title is NOT encrypted
-        Assert.Equal("Public Title", payload.GetProperty("title").GetString());
+        // Verify encrypted fields are NOT plaintext
+        Assert.NotEqual("Public Title", payload.GetProperty("title").GetString());
+        Assert.NotEqual("Secret Message", payload.GetProperty("message").GetString());
+        Assert.NotEqual("https://example.com/image.png", payload.GetProperty("imageURL").GetString());
+        Assert.NotEqual("https://example.com", payload.GetProperty("actionURL").GetString());
 
-        // Verify message IS encrypted
-        var encryptedMessage = payload.GetProperty("message").GetString();
-        Assert.NotEqual("Secret Message", encryptedMessage);
-
-        // Verify other fields are NOT encrypted
+        // Verify type and tags remain plaintext (needed for filtering/routing)
         Assert.Equal("info", payload.GetProperty("type").GetString());
-        Assert.Equal("https://example.com/image.png", payload.GetProperty("imageURL").GetString());
-        Assert.Equal("https://example.com", payload.GetProperty("actionURL").GetString());
-
         var tags = payload.GetProperty("tags");
         Assert.Equal(2, tags.GetArrayLength());
+
+        // Verify IV is present
+        Assert.True(payload.TryGetProperty("iv", out var iv));
+        Assert.False(string.IsNullOrEmpty(iv.GetString()));
     }
 
     [Fact]
