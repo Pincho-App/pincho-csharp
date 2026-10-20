@@ -77,7 +77,7 @@ Create an issue explaining:
 7. **Build with warnings as errors**: `dotnet build -p:TreatWarningsAsErrors=true`
 8. **Commit** with a clear message
 9. **Push** to your fork
-10. **Open a Merge Request**
+10. **Open a Pull Request**
 
 ## Code Guidelines
 
@@ -160,7 +160,7 @@ dotnet restore && dotnet build -p:TreatWarningsAsErrors=true && dotnet test --co
 ## Need Help?
 
 - **Architecture questions?** See [CLAUDE.md](CLAUDE.md)
-- **Stuck?** Open an issue or ask in your MR
+- **Stuck?** Open an issue or ask in your PR
 
 ## License
 

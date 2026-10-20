@@ -1,3 +1,9 @@
+---
+name: Feature request
+about: Suggest a new capability or improvement
+labels: [enhancement]
+---
+
 ## Feature Summary
 
 <!-- A clear and concise one-sentence summary of the feature -->
@@ -50,5 +56,3 @@ using WirePusher;
 - [ ] This feature aligns with the library's goals
 - [ ] I have considered backwards compatibility
 - [ ] I am willing to contribute a PR for this feature (optional)
-
-/label ~enhancement

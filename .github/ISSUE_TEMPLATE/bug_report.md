@@ -1,3 +1,9 @@
+---
+name: Bug report
+about: Something is broken or behaves unexpectedly
+labels: [bug]
+---
+
 ## Bug Description
 
 <!-- A clear and concise description of what the bug is -->
@@ -53,5 +59,3 @@ using WirePusher;
 - [ ] I have tested with the latest version of the library
 - [ ] I have provided a minimal, reproducible example
 - [ ] I have included the full error stack trace
-
-/label ~bug
